@@ -1,0 +1,50 @@
+{
+    "title": "Kocom Smart Home",
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "phone_number": "Cell phone number"
+                },
+                "description": "It's a process to get started with Kocom at the very beginning.\n Please enter an 11-digit phone number excluding the hyphen.",
+                "title": ""
+            },
+            "wallpad": {
+                "data": {
+                    "wallpad_number": "8 digits"
+                },
+                "description": "Please enter the authentication number displayed on the wallpad or video phone screen.\n Please enter it within the authentication time.",
+                "title": "Wallpad Authentication"
+            }
+        },
+        "error": {
+            "network_error": "Network connection failure",
+            "invalid_phone": "Invalid phone number",
+            "invalid_auth": "Invalid wallpad auth number",
+            "auth_failure": "Wallpad authentication failed"
+        },
+        "abort": {
+            "registration_failed": "Device registration failed"
+        }
+    },
+    "options": {
+        "error": {
+            "network_error": "Network connection failure",
+            "invalid_phone": "Invalid phone number",
+            "invalid_auth": "Invalid wallpad auth number",
+            "auth_failure": "Wallpad authentication failed"
+        },
+        "step": {
+            "init": {
+                "title": "Kocom SmartHome Options Settings",
+                "description": "For a room, check all lights, outlets, and heating at scan interval intervals.",
+                "data": {
+                    "room_interval": "room scan interval (seconds)",
+                    "gas_interval": "gas scan interval (seconds)",
+                    "vent_interval": "vent scan interval (seconds)",
+                    "energy_interval": "energy scan interval (seconds)"
+                }
+            }
+        }
+    }
+}

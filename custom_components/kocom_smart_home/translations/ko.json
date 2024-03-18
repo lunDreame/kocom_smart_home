@@ -1,0 +1,50 @@
+{
+    "title": "\uCF54\uCF64 \uC2A4\uB9C8\uD2B8 \uD648",
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "phone_number": "\uD734\uB300\uD3F0 \uBC88\uD638"
+                },
+                "description": "\uCF54\uCF64\uC744 \uC2DC\uC791\uD558\uB294 \uB9E8 \uCC98\uC74C \uACFC\uC815\uC785\uB2C8\uB2E4.\n \uD558\uC774\uD508\uC744 \uC81C\uC678\uD55C 11\uC790\uB9AC \uC804\uD654\uBC88\uD638\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694.",
+                "title": ""
+            },
+            "wallpad": {
+                "data": {
+                    "wallpad_number": "8\uC790\uB9AC"
+                },
+                "description": "\uC6D4\uD328\uB4DC \uB610\uB294 \uBE44\uB514\uC624\uD3F0 \uD654\uBA74\uC5D0 \uD45C\uC2DC\uB41C \uC778\uC99D \uBC88\uD638\uB97C \uC785\uB825\uD558\uC2ED\uC2DC\uC624.\n \uC778\uC99D \uC2DC\uAC04 \uB0B4\uC5D0 \uC785\uB825\uD574 \uC8FC\uC2DC\uAE30 \uBC14\uB78D\uB2C8\uB2E4.",
+                "title": "\uC6D4\uD328\uB4DC \uC778\uC99D"
+            }
+        },
+        "error": {
+            "network_error": "\uB124\uD2B8\uC6CC\uD06C \uC5F0\uACB0 \uC2E4\uD328",
+            "invalid_phone": "\uC798\uBABB\uB41C \uC804\uD654 \uBC88\uD638",
+            "invalid_auth": "\uC798\uBABB\uB41C \uC6D4\uD328\uB4DC \uC778\uC99D \uBC88\uD638",
+            "auth_failure": "\uC6D4\uD328\uB4DC \uC778\uC99D \uC2E4\uD328"
+        },
+        "abort": {
+            "registration_failed": "\uC7A5\uCE58 \uB4F1\uB85D \uC2E4\uD328"
+        }
+    },
+    "options": {
+        "error": {
+            "network_error": "\uB124\uD2B8\uC6CC\uD06C \uC5F0\uACB0 \uC2E4\uD328",
+            "invalid_phone": "\uC798\uBABB\uB41C \uC804\uD654 \uBC88\uD638",
+            "invalid_auth": "\uC798\uBABB\uB41C \uC6D4\uD328\uB4DC \uC778\uC99D \uBC88\uD638",
+            "auth_failure": "\uC6D4\uD328\uB4DC \uC778\uC99D \uC2E4\uD328"
+        },
+        "step": {
+            "init": {
+                "title": "\uCF54\uCF64 \uC2A4\uB9C8\uD2B8\uD648 \uC635\uC158 \uC124\uC815",
+                "description": "\uBC29\uC758 \uACBD\uC6B0 \uC2A4\uCE94 \uAC04\uACA9\uB9CC\uD07C \uBAA8\uB4E0 \uC870\uBA85, \uCF58\uC13C\uD2B8 \uBC0F \uB09C\uBC29\uC744 \uD655\uC778\uD569\uB2C8\uB2E4.",
+                "data": {
+                    "room_interval": "\uBC29 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "gas_interval": "\uAC00\uC2A4 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "vent_interval": "\uD658\uAE30 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "energy_interval": "\uC5D0\uB108\uC9C0 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)"
+                }
+            }
+        }
+    }
+}
