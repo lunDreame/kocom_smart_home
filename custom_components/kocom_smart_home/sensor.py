@@ -198,7 +198,7 @@ class KocomEnergy(SensorEntity):
     @property
     def unit_of_measurement(self):
         if self._item_period == "price":
-            return "krw"
+            return "KRW/kWh"
         else:
             return ENERGY_NAME[self._item_list['energy']][2]
 
