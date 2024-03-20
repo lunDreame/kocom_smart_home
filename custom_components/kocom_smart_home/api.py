@@ -118,7 +118,15 @@ class KocomHomeManager:
         uri_hash = hashlib.md5(f"GET:{uri}".encode()).hexdigest()
         response = hashlib.md5(f"{username_hash}:{nonce}:{uri_hash}".encode()).hexdigest()
         return f'Digest username="{username}", realm="kbranch", nonce="{nonce}", uri="{uri}", response="{response}"'
-    
+        
+    def generate_fcm_token(self, input_string, length=163) -> str:
+        """FCM Token create."""
+        random.seed(input_string)
+        characters = string.ascii_letters + string.digits
+        fcm_token = ''.join(random.choice(characters) for _ in range(length))
+        LOGGER.debug("Generated FCM Token: %s", fcm_token)
+        return fcm_token
+
     async def fetch_kbranch_token(self) -> None:
         """Gets the authentication token of the kbranch kocom server."""
         session = async_get_clientsession(self.hass)
@@ -191,20 +199,23 @@ class KocomHomeManager:
             ),
             "Cookie": self.kbranch_tokens['cookie'],
         }
-        data = {"phonenum": phone_number, "type": self.DIGEST_IKOD, "token": "00000000"}
+        data = {"phonenum": phone_number, "type": self.DIGEST_IKOD, "token": self.generate_fcm_token(phone_number)}
 
         try: 
             response = await session.get(url, headers=headers, json=data, timeout=TIMEOUT_SEC)
-            self.login_data[SPHONE_INFO] = await response.json(content_type='text/html')
-            _LOGGER.debug("request_sphone_login - response :: %s", self.login_data[SPHONE_INFO])
+            json_data = await response.json(content_type='text/html')
+            self.login_data[SPHONE_INFO] = json_data
+            self.login_data[SPHONE_UUID] = f'00000{str(json_data['zone'])}00{str(json_data['id'])}'
 
-            return await self.request_info_login()
+            return await self.request_pairlist_login()    
         except Exception:
             _LOGGER.error("Request failed while attempting a login request to the Kocom server, PATH: '/api/sphone'")
             return False
-        
+
+    """
     async def request_info_login(self) -> Union[bool, Callable]:
-        """Gets the login return information for the sphone."""
+        Gets the login return information for the sphone.
+        
         zone = self.login_data[SPHONE_INFO]['zone']
         id = self.login_data[SPHONE_INFO]['id']
 
@@ -220,7 +231,7 @@ class KocomHomeManager:
             ),
             "Cookie": self.kbranch_tokens['cookie'],
         }
-        data = {"version": "1000002", "pushid": "00000000"}
+        data = {"version": "1000002", "pushid": ""}
 
         try: 
             response = await session.get(url, headers=headers, json=data, timeout=TIMEOUT_SEC)
@@ -232,6 +243,7 @@ class KocomHomeManager:
                           {self.login_data[SPHONE_UUID]}
             )
             return False
+    """
 
     async def request_pairlist_login(self) -> Union[dict, bool]:
         """Finds the paired device based on the phone number."""
