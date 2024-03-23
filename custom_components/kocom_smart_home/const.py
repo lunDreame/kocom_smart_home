@@ -4,7 +4,7 @@ from homeassistant.components.sensor import SensorDeviceClass
 
 NAME = "Kocom Smart Home"
 DOMAIN = "kocom_smart_home"
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 PLATFORMS = [
     Platform.FAN,
     Platform.LIGHT,
