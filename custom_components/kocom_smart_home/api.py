@@ -126,7 +126,7 @@ class KocomHomeManager:
         random.seed(input_string)
         characters = string.ascii_letters + string.digits
         fcm_token = ''.join(random.choice(characters) for _ in range(length))
-        LOGGER.debug("Generated FCM Token: %s", fcm_token)
+        _LOGGER.debug("Generated FCM Token: %s", fcm_token)
         return fcm_token
 
     async def fetch_kbranch_token(self) -> None:
