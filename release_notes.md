@@ -1,5 +1,5 @@
 ### V1.0.3
-- 랜덤 모듈 추가
+- random, string 모듈 추가
 
 ### V1.0.2
 - FCM Token 생성자 추가
