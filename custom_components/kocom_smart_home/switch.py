@@ -1,172 +1,76 @@
-import logging
-from datetime import timedelta
 from homeassistant.components.switch import SwitchEntity
 
-from .const import (
-    DOMAIN,
-    VERSION, 
-    CONF_PHONE_NUMBER,
-    PAIR_INFO
-)
-from .api import parse_device_info
+from .const import DOMAIN, LOGGER, BIT_OFF, BIT_ON
+from .coordinator import KocomCoordinator
+from .device import KocomEntity
 
-_LOGGER = logging.getLogger(__name__)
-
-SCAN_INTERVAL = timedelta(seconds=300)
+ICON = {
+    "gas": "mdi:gas-cylinder",
+    "concent": "mdi:power-socket-eu"
+}
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    hass_data = hass.data[DOMAIN][config_entry.entry_id]
-    entities = []
+    api = hass.data[DOMAIN][config_entry.entry_id]
+    entities_to_add: list = []
 
-    outlet_data = hass_data.device_data.get('outlet')
+    coordinators = [
+        KocomCoordinator("gas", api, hass, config_entry),
+        KocomCoordinator("concent", api, hass, config_entry)
+    ]
 
-    for device in outlet_data['entry']:
-        for id in device['list']:
-            entities.append(KocomOutlet(device, id, hass_data))
-    
-    gas_state = await hass_data.check_device_status('gas')
+    for coordinator in coordinators:
+        devices = await coordinator.get_devices()
+        entities_to_add.extend(
+            KocomSwitch(coordinator, device) for device in devices
+        )
 
-    if isinstance(gas_state, dict):
-        entities.append(KocomGas(gas_state, hass_data))
+    async_add_entities(entities_to_add)
 
-    async_add_entities(entities)
-
-
-class KocomGas(SwitchEntity):
-    def __init__(self, state_data, hass_data) -> None:
-        self._state_data = state_data
-        self._hass_data = hass_data
-        self._device_type = "가스"
-        self._state_attr = parse_device_info(state_data, 'attr')
-        self._state_power = parse_device_info(state_data, 'power')
-        self._result = {}
+class KocomSwitch(KocomEntity, SwitchEntity):
+    def __init__(self, coordinator, device) -> None:
+        self.device = device
+        self.device_id = device.get('device_id')
+        self.device_name = device.get('device_name')
+        super().__init__(coordinator)
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return the entity ID."""
-        return f'switch.gas_{self._state_attr['id'].lower()}_{self._hass_data.entry.data[CONF_PHONE_NUMBER][7:]}'
-
+        return self.device_id
+    
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of the sensor, if any."""
-        return self._device_type
-
+        return self.device_name
+    
     @property
-    def icon(self):
+    def icon(self) -> str | None:
         """Icon to use in the frontend, if any."""
-        return "mdi:gas-cylinder"
+        return ICON[self.device['device_type']]
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """If the switch is currently on or off."""
-        return self._state_power
+        return self.coordinator._is_device_state(self.device_id)
 
     @property
     def extra_state_attributes(self):
         """Attributes."""
         attributes = {
-            "Device type": self._state_attr['id'],
-            "Device state": self._state_power,
-            "Registration date": self._state_attr['reg_date']
+            "Device room": self.device['device_room'],
+            "Device type": self.device['device_type'],
+            "Registration Date": self.device['reg_date'],
+            "Sync date": self.coordinator._data['sync_date']
         }
         return attributes
     
-    async def async_update(self):
-        """Get the latest state of the sensor."""
-        if self._hass_data is None: 
-            return
-        
-        gas_state = await self._hass_data.check_device_status('gas')
-        self._state_power = parse_device_info(gas_state, 'power')
-        
     async def async_turn_on(self, **kwargs):
         """Turn the switch on."""
-        self._result = await self._hass_data.send_control_request('gas', self._state_attr['id'], 'power', '0')
-        self._state_power = parse_device_info(self._result, 'power')
-
-    async def aync_turn_off(self, **kwargs):
-        """Turn the switch off."""
-        self._result = await self._hass_data.send_control_request('gas', self._state_attr['id'], 'power', '0')
-        self._state_power = parse_device_info(self._result, 'power')
-
-    @property
-    def device_info(self):
-        """Return information about the device."""
-        return {
-            "identifiers": {(DOMAIN, 'kocom')},
-            "name": "KOCOM",
-            "manufacturer": "Kocom Co, Ltd.",
-            "model": self._hass_data.login_data[PAIR_INFO]['list'][0]['alias'],
-            "sw_version": VERSION
-        }
-
-
-
-class KocomOutlet(SwitchEntity):
-    def __init__(self, device_type, device_id, hass_data) -> None:
-        self._device_type = device_type
-        self._device_id = device_id
-        self._hass_data = hass_data
-        self._result = {}
-
-    @property
-    def unique_id(self):
-        """Return the entity ID."""
-        return f'switch.{self._device_type['id'].lower()}_{self._device_id['function'].lower()}_{self._hass_data.entry.data[CONF_PHONE_NUMBER][7:]}'
-    
-    @property
-    def name(self):
-        """Return the name of the sensor, if any."""
-        return f'{self._device_type['id']} {self._device_id['function']}'
-    
-    @property
-    def icon(self):
-        """Icon to use in the frontend, if any."""
-        return "mdi:power-socket-eu"
-    
-    @property
-    def is_on(self):
-        """If the switch is currently on or off."""
-        return self._hass_data.is_device_state('outlet', self._device_type['id'], self._device_id['function'])
-
-    @property
-    def extra_state_attributes(self):
-        """Attributes."""
-        attributes = {
-            "Device room": self._device_type['id'],
-            "Device type": self._device_id['function'],
-            "Device state": self._hass_data.is_device_state(
-                'outlet', self._device_type['id'], self._device_id['function']
-            ),
-        }
-        return attributes
-    
-    async def async_update(self):
-        """Get the latest state of the sensor."""
-        if self._hass_data is None: 
-            return
+        await self.coordinator.set_device_command(self.device_id, BIT_ON)
+        await self.coordinator.async_request_refresh()
         
-        await self._hass_data.device_state('outlet')
-
-    async def async_turn_on(self, **kwargs):
-        """Turn the switch on."""
-        self._result = await self._hass_data.send_control_request('concent', self._device_type['id'], self._device_id['function'], '255')
-
-        self._hass_data.update_device_data(self._result)
-
     async def async_turn_off(self, **kwargs):
         """Turn the switch off."""
-        self._result = await self._hass_data.send_control_request('concent', self._device_type['id'], self._device_id['function'], '0')
+        await self.coordinator.set_device_command(self.device_id, BIT_OFF)
+        await self.coordinator.async_request_refresh()
 
-        self._hass_data.update_device_data(self._result)
-
-    @property
-    def device_info(self):
-        """Return information about the device."""
-        return {
-            "identifiers": {(DOMAIN, 'outlet')},
-            "name": "KOCOM Outlet",
-            "manufacturer": "Kocom Co, Ltd.",
-            "model": self._hass_data.login_data[PAIR_INFO]['list'][0]['alias'],
-            "sw_version": VERSION
-        }
