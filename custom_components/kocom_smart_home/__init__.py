@@ -1,20 +1,13 @@
 """
 Custom integration to integrate Kocom Smart Home with Home Assistant.
 """
-import logging
 import asyncio
-from typing import *
 
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
-from .const import (
-    DOMAIN,
-    PLATFORMS,
-)
-from .api import KocomHomeManager
-
-_LOGGER = logging.getLogger(__name__)
+from .const import DOMAIN, PLATFORMS, LOGGER
+from .api import KocomHomeAPI
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up this integration using UI."""
@@ -26,12 +19,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
 
     entry_data: dict[str] = entry.data
-    _LOGGER.debug("async_setup_entry. entry_data :: %s", entry_data)
+    LOGGER.debug("async_setup_entry. entry_data :: %s", entry_data)
     
-    manager = KocomHomeManager(hass)
-    await manager.set_entry(entry)
+    api = KocomHomeAPI(hass)
+    await api.set_entry_and_initialize_devices(entry)
 
-    hass.data[DOMAIN][entry.entry_id] = manager
+    hass.data[DOMAIN][entry.entry_id] = api
 
     for component in PLATFORMS:
         hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
@@ -49,3 +42,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         )
     )
     return unload_ok
+
+    
