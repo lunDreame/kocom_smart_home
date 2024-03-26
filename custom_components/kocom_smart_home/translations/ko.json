@@ -15,6 +15,22 @@
                 },
                 "description": "\uC6D4\uD328\uB4DC \uB610\uB294 \uBE44\uB514\uC624\uD3F0 \uD654\uBA74\uC5D0 \uD45C\uC2DC\uB41C \uC778\uC99D \uBC88\uD638\uB97C \uC785\uB825\uD558\uC2ED\uC2DC\uC624.\n \uC778\uC99D \uC2DC\uAC04 \uB0B4\uC5D0 \uC785\uB825\uD574 \uC8FC\uC2DC\uAE30 \uBC14\uB78D\uB2C8\uB2E4.",
                 "title": "\uC6D4\uD328\uB4DC \uC778\uC99D"
+            },
+            "options": {
+                "data": {
+                    "max_room_cnt": "\ucd5c\ub300\u0020\ubc29\u0020\uac1c\uc218",
+                    "max_switch_cnt": "\ucd5c\ub300\u0020\uc2a4\uc704\uce58\u0020\uac1c\uc218",
+                    "light_interval": "\uC870\uBA85 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "concent_interval": "\uCF58\uC13C\uD2B8 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "heat_interval": "\uB09C\uBC29 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "aircon_interval": "\uC5D0\uC5B4\uCEE8 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "gas_interval": "\uAC00\uC2A4 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "vent_interval": "\uD658\uAE30 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "energy_interval": "\uC5D0\uB108\uC9C0 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "totalcontrol_interval": "\uC77C\uAD04 \uC81C\uC5B4 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)"
+                },
+                "description": "\uAC01 \uC7A5\uCE58\uC758 \uC2A4\uCE94 \uAC04\uACA9\uC744 \uCD08 \uB2E8\uC704\uB85C \uC870\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.\n \uC2A4\uCE94 \uAC04\uACA9\uC774 \uB108\uBB34 \uB0AE\uC73C\uBA74 \uC11C\uBC84\uC5D0 \uACFC\uC694\uCCAD\uC774 \uBC1C\uC0DD\uD560 \uC218 \uC788\uC73C\uB2C8 \uC801\uC808\uD788 \uC124\uC815\uD558\uC138\uC694.\n \ub514\ubc14\uc774\uc2a4\uc758\u0020\ub300\ud55c\u0020\ucd5c\ub300\u0020\ubc29\u002c\u0020\uc2a4\uc704\uce58\u0020\uac1c\uc218\ub97c\u0020\uc124\uc815\ud560\uc218\u0020\uc788\uc2b5\ub2c8\ub2e4\u002e",
+                "title": "\ucf54\ucf64\u0020\uc635\uc158\u0020\uc870\uc815\u000d"
             }
         },
         "error": {
@@ -36,14 +52,9 @@
         },
         "step": {
             "init": {
-                "title": "\uCF54\uCF64 \uC2A4\uB9C8\uD2B8\uD648 \uC635\uC158 \uC124\uC815",
-                "description": "\uBC29\uC758 \uACBD\uC6B0 \uC2A4\uCE94 \uAC04\uACA9\uB9CC\uD07C \uBAA8\uB4E0 \uC870\uBA85, \uCF58\uC13C\uD2B8 \uBC0F \uB09C\uBC29\uC744 \uD655\uC778\uD569\uB2C8\uB2E4.",
-                "data": {
-                    "room_interval": "\uBC29 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "gas_interval": "\uAC00\uC2A4 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "vent_interval": "\uD658\uAE30 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "energy_interval": "\uC5D0\uB108\uC9C0 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)"
-                }
+                "title": "\uC635\uC158 \uC124\uC815",
+                "description": "",
+                "data": {}
             }
         }
     }
