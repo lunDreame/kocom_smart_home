@@ -1,75 +1,57 @@
-import logging
-from datetime import timedelta
-from homeassistant.components.climate.const import (
-    PRESET_AWAY,
-    PRESET_NONE
-)
-from homeassistant.components.climate import (
-    ClimateEntity,
-    ClimateEntityFeature,
-    HVACMode,
-)
-from homeassistant.const import (
-    UnitOfTemperature,
-    ATTR_TEMPERATURE
-)
+from homeassistant.const import UnitOfTemperature, ATTR_TEMPERATURE
+from homeassistant.components.climate.const import PRESET_NONE, PRESET_AWAY
+from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACMode
 
-from .const import (
-    DOMAIN,
-    VERSION, 
-    CONF_PHONE_NUMBER,
-    PAIR_INFO,
-)
-
-_LOGGER = logging.getLogger(__name__)
-
-SCAN_INTERVAL = timedelta(seconds=300)
+from .const import DOMAIN, LOGGER, BIT_OFF, BIT_ON
+from .coordinator import KocomCoordinator
+from .device import KocomEntity
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    hass_data = hass.data[DOMAIN][config_entry.entry_id]
-    entities = []
+    api = hass.data[DOMAIN][config_entry.entry_id]
+    entities_to_add: list = []
 
-    thermostat_data = hass_data.device_data.get('thermostat')
+    coordinators = [
+        KocomCoordinator("heat", api, hass, config_entry),
+        KocomCoordinator("aircon", api, hass, config_entry)
+    ]
 
-    for device_type in thermostat_data['entry']:
-        entities.append(KocomHeating(device_type, hass_data))
-
-    aircon_data = hass_data.device_data.get('aircon')
-
-    for device_type in aircon_data['entry']:
-        entities.append(KocomAircon(device_type, hass_data)) 
-
-    async_add_entities(entities)
-
-
-class KocomHeating(ClimateEntity):
-    def __init__(self, device_type, hass_data) -> None:
-        self._device_type = device_type
-        self._hass_data = hass_data
-        self._device_id = "00"
-        self._result = {}
-        self._features = (
-            ClimateEntityFeature.TARGET_TEMPERATURE | 
-            ClimateEntityFeature.PRESET_MODE
+    for coordinator in coordinators:
+        devices = await coordinator.get_devices()
+        entities_to_add.extend(
+            KocomClimate(coordinator, device) for device in devices
         )
 
-    @property
-    def unique_id(self):
-        """Return the entity ID."""
-        return f'climate.{self._device_type['id'].lower()}_{self._device_id}_{self._hass_data.entry.data[CONF_PHONE_NUMBER][7:]}'
+    async_add_entities(entities_to_add)
+
+class KocomClimate(KocomEntity, ClimateEntity):
+    def __init__(self, coordinator, device) -> None:
+        self.device = device
+        self.device_id = device.get('device_id')
+        self.device_name = device.get('device_name')
+        if self.device['device_type'] == "heat":
+            self.mode = HVACMode.HEAT 
+        else:
+            self.mode = HVACMode.COOL
+        self.features = (ClimateEntityFeature.TARGET_TEMPERATURE)
+        super().__init__(coordinator)
 
     @property
-    def name(self):
+    def unique_id(self) -> str:
+        """Return the entity ID."""
+        return self.device_id
+    
+    @property
+    def name(self) -> str:
         """Return the name of the sensor, if any."""
-        return f'{self._device_type['id']} {self._device_id}'
+        return self.device_name
 
     @property
     def current_temperature(self):
-        return self._hass_data.is_device_state('thermostat', self._device_type['id'], 'nowtemp')
+        return self.coordinator._is_device_state(self.device_id, "nowtemp")
 
     @property
     def target_temperature(self):
-        return self._hass_data.is_device_state('thermostat', self._device_type['id'], 'settemp')
+        return self.coordinator._is_device_state(self.device_id, "settemp")
     
     @property
     def temperature_unit(self):
@@ -84,211 +66,85 @@ class KocomHeating(ClimateEntity):
     @property
     def min_temp(self):
         """Return the minimum temperature."""
-        return 5
+        return self.device["min_temp"]
 
     @property
     def max_temp(self):
         """Return the maximum temperature."""
-        return 40
+        return self.device["max_temp"]
 
     @property
     def hvac_modes(self):
         """Return the list of available hvac operation modes.
         Need to be a subset of HVAC_MODES.
         """
-        return [HVACMode.OFF, HVACMode.HEAT]
+        return [HVACMode.OFF, self.mode]
     
     @property
     def hvac_mode(self):
         """Return hvac operation ie. heat, cool mode.
         Need to be one of HVAC_MODE_*.
         """
-        return HVACMode.HEAT if self._hass_data.is_device_state('thermostat', self._device_type['id'], 'power') else HVACMode.OFF
+        if self.coordinator._is_device_state(self.device_id):
+            return self.mode
+        return HVACMode.OFF
     
     @property
     def preset_modes(self):
-        return [PRESET_AWAY, PRESET_NONE]
+        if self.device['device_type'] == "heat":
+            return [PRESET_AWAY, PRESET_NONE]
+        return None
     
     @property
     def preset_mode(self):
-        return PRESET_AWAY if self._hass_data.is_device_state('thermostat', self._device_type['id'], 'mode') else PRESET_NONE
+        if self.coordinator._is_device_state(self.device_id, "mode"):
+            return PRESET_AWAY
+        return PRESET_NONE
 
     @property
     def supported_features(self):
-        return self._features
+        if self.device['device_type'] == "heat":
+            self.features |= ClimateEntityFeature.PRESET_MODE
+        return self.features
 
     @property
     def extra_state_attributes(self):
+        """Attributes."""
         attributes = {
-            "Device room": self._device_type['id'],
-            "Device type": self._device_id,
+            "Device room": self.device['device_room'],
+            "Device type": self.device['device_type'],
+            "Registration Date": self.device['reg_date'],
+            "Sync date": self.coordinator._data['sync_date']
         }
         return attributes
     
-    async def async_update(self):
-        """Get the latest state of the sensor."""
-        if self._hass_data is None: 
-            return
-
-        await self._hass_data.device_state('thermostat')
-    
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new target hvac mode."""
-        if hvac_mode == HVACMode.HEAT:
-            self._result = await self._hass_data.send_control_request('heat', self._device_type['id'], 'power', '1')
-
+        if hvac_mode == self.mode:
+            await self.coordinator.set_device_command(self.device_id, BIT_ON)
         elif hvac_mode == HVACMode.OFF:
-            self._result = await self._hass_data.send_control_request('heat', self._device_type['id'], 'power', '0')
+            await self.coordinator.set_device_command(self.device_id, BIT_OFF)
 
-        self._hass_data.update_device_data(self._result)
+        await self.coordinator.async_request_refresh()
 
     async def async_set_preset_mode(self, preset_mode):
         """Set new target preset mode."""
         if preset_mode == PRESET_AWAY:
-            self._result = await self._hass_data.send_control_request('heat', self._device_type['id'], 'power', '1')
+            await self.coordinator.set_device_command(self.device_id, BIT_ON)
 
-            self._result = await self._hass_data.send_control_request('heat', self._device_type['id'], 'mode', '1')
+            await self.coordinator.set_device_command(self.device_id, BIT_ON, "mode")
         elif preset_mode == PRESET_NONE:
-            self._result = await self._hass_data.send_control_request('heat', self._device_type['id'], 'mode', '0')
+            await self.coordinator.set_device_command(self.device_id, BIT_OFF, "mode")
 
-        self._hass_data.update_device_data(self._result)    
+        await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
-        self._result = await self._hass_data.send_control_request('heat', self._device_type['id'], 'power', '1')
-
-        self._result = await self._hass_data.send_control_request(
-            'heat', self._device_type['id'], 'settemp', kwargs.get(ATTR_TEMPERATURE, 20)
+        await self.coordinator.set_device_command(self.device_id, BIT_ON)
+        await self.coordinator.set_device_command(
+            self.device_id, kwargs.get(ATTR_TEMPERATURE, 20), "settemp"
         )
 
-        self._hass_data.update_device_data(self._result)    
+        await self.coordinator.async_request_refresh()
 
-    @property
-    def device_info(self):
-        """Return information about the device."""
-        return {
-            "identifiers": {(DOMAIN, 'thermostat')},
-            "name": "KOCOM Thermostat",
-            "manufacturer": "Kocom Co, Ltd.",
-            "model": self._hass_data.login_data[PAIR_INFO]['list'][0]['alias'],
-            "sw_version": VERSION
-        }
-
-
-
-class KocomAircon(ClimateEntity):
-    def __init__(self, device_type, hass_data) -> None:
-        self._device_type = device_type
-        self._hass_data = hass_data
-        self._device_id = "00"
-        self._result = {}
-        self._features = (ClimateEntityFeature.TARGET_TEMPERATURE)
-
-    @property
-    def unique_id(self):
-        """Return the entity ID."""
-        return f'climate.{self._device_type['id'].lower()}_{self._device_id}_{self._hass_data.entry.data[CONF_PHONE_NUMBER][7:]}'
-
-    @property
-    def name(self):
-        """Return the name of the sensor, if any."""
-        return f'{self._device_type['id']} {self._device_id}'
-    
-    @property
-    def icon(self):
-        """Icon to use in the frontend, if any."""
-        return "mdi:air-conditioner"
-
-    @property
-    def current_temperature(self):
-        return self._hass_data.is_device_state('aircon', self._device_type['id'], 'nowtemp')
-
-    @property
-    def target_temperature(self):
-        return self._hass_data.is_device_state('aircon', self._device_type['id'], 'settemp')
-    
-    @property
-    def temperature_unit(self):
-        """Return the unit of measurement which this thermostat uses."""
-        return UnitOfTemperature.CELSIUS
-
-    @property
-    def target_temperature_step(self):
-        """Return the supported step of target temperature."""
-        return 1
-
-    @property
-    def min_temp(self):
-        """Return the minimum temperature."""
-        return 18
-
-    @property
-    def max_temp(self):
-        """Return the maximum temperature."""
-        return 30
-
-    @property
-    def hvac_modes(self):
-        """Return the list of available hvac operation modes.
-        Need to be a subset of HVAC_MODES.
-        """
-        return [HVACMode.OFF, HVACMode.COOL]
-    
-    @property
-    def hvac_mode(self):
-        """Return hvac operation ie. heat, cool mode.
-        Need to be one of HVAC_MODE_*.
-        """
-        return HVACMode.COOL if self._hass_data.is_device_state('aircon', self._device_type['id'], 'power') else HVACMode.OFF
-
-    @property
-    def supported_features(self):
-        return self._features
-
-    @property
-    def extra_state_attributes(self):
-        attributes = {
-            "Device room": self._device_type['id'],
-            "Device type": self._device_id,
-        }
-        return attributes
-    
-    async def async_update(self):
-        """Get the latest state of the sensor."""
-        if self._hass_data is None: 
-            return
         
-        await self._hass_data.device_state('aircon')
-    
-    async def async_set_hvac_mode(self, hvac_mode):
-        """Set new target hvac mode."""
-        if hvac_mode == HVACMode.COOL:
-            self._result = await self._hass_data.send_control_request('aircon', self._device_type['id'], 'power', '1')
-
-        elif hvac_mode == HVACMode.OFF:
-            self._result = await self._hass_data.send_control_request('aircon', self._device_type['id'], 'power', '0')
-
-        self._hass_data.update_device_data(self._result)
-
-    async def async_set_temperature(self, **kwargs):
-        """Set new target temperature."""
-        self._result = await self._hass_data.send_control_request('aircon', self._device_type['id'], 'power', '1')
-
-        self._result = await self._hass_data.send_control_request(
-            'aircon', self._device_type['id'], 'settemp', kwargs.get(ATTR_TEMPERATURE, 20)
-        )
-
-        self._hass_data.update_device_data(self._result)    
-
-    @property
-    def device_info(self):
-        """Return information about the device."""
-        return {
-            "identifiers": {(DOMAIN, 'aircon')},
-            "name": "KOCOM Aircon",
-            "manufacturer": "Kocom Co, Ltd.",
-            "model": self._hass_data.login_data[PAIR_INFO]['list'][0]['alias'],
-            "sw_version": VERSION
-        }
-
-
