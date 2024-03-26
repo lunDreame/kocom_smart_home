@@ -1,6 +1,5 @@
-import logging
-from datetime import timedelta
-from typing import *
+from typing import Any, Optional
+
 from homeassistant.components.fan import FanEntity
 from homeassistant.components.fan import FanEntityFeature
 from homeassistant.util.percentage import (
@@ -8,65 +7,62 @@ from homeassistant.util.percentage import (
     percentage_to_ranged_value,
 )
 
-from .const import (
-    DOMAIN,
-    VERSION, 
-    CONF_PHONE_NUMBER,
-    CONF_VENT_INTERVAL,
-    PAIR_INFO,
-    FAN_ICONS,
-    SPEED_LIST
-)
-from .api import parse_device_info
+from .const import DOMAIN, LOGGER, BIT_OFF, BIT_ON
+from .coordinator import KocomCoordinator
+from .device import KocomEntity
 
-_LOGGER = logging.getLogger(__name__)
+SPEED_LOW = "1"
+SPEED_MID = "2" 
+SPEED_HIGH = "3" 
+SPEED_LIST = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
 
-SCAN_INTERVAL = timedelta(seconds=300)
+ICON = {
+    "off": "mdi:fan-off",
+    "1": "mdi:fan-speed-1",
+    "2": "mdi:fan-speed-2",
+    "3": "mdi:fan-speed-3",
+}
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    hass_data = hass.data[DOMAIN][config_entry.entry_id]
-    entities = []
+    api = hass.data[DOMAIN][config_entry.entry_id]
 
-    vent_state = await hass_data.check_device_status('vent')
+    coordinator = KocomCoordinator("vent", api, hass, config_entry)
+    devices = await coordinator.get_devices()
 
-    if isinstance(vent_state, dict):
-        entities.append(KocomFan(vent_state, hass_data))
+    entities_to_add: list = [
+        KocomFan(coordinator, devices[0])
+    ]
 
-    async_add_entities(entities)
-
-
-class KocomFan(FanEntity):
-    def __init__(self, state_data, hass_data):
-        self._state_data = state_data
-        self._hass_data = hass_data
-        self._device_type = "환기"
-        self._state_attr = parse_device_info(state_data, 'attr')
-        self._state_power = parse_device_info(state_data, 'power')
-        self._state_wind = parse_device_info(state_data, 'wind')
-        self._result = {}
+    async_add_entities(entities_to_add)
+    
+class KocomFan(KocomEntity, FanEntity): 
+    def __init__(self, coordinator, device) -> None:
+        self.device = device
+        self.device_id = device.get('device_id')
+        self.device_name = device.get('device_name')
+        super().__init__(coordinator)
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return the entity ID."""
-        return f'switch.ventilation_{self._state_attr['id'].lower()}_{self._hass_data.entry.data[CONF_PHONE_NUMBER][7:]}'
+        return self.device_id
     
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of the sensor, if any."""
-        return self._device_type
+        return self.device_name
 
     @property
-    def icon(self):
+    def icon(self) -> str:
         """Icon to use in the frontend, if any."""
-        if self._state_power:
-            return FAN_ICONS[self._state_wind]
-        else:
-            return FAN_ICONS['off']
+        if self.coordinator._data['data']['power']:
+            return ICON.get(self.coordinator._data['data']['wind'])
+        return ICON['off']
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """If the switch is currently on or off."""
-        return self._state_power
+        return self.coordinator._data['data']['power']
 
     @property
     def supported_features(self) -> int: 
@@ -76,12 +72,14 @@ class KocomFan(FanEntity):
     @property
     def percentage(self):
         """Return the current percentage based speed."""
-        return ordered_list_item_to_percentage(SPEED_LIST, self._state_wind)
+        return ordered_list_item_to_percentage(
+            SPEED_LIST, self.coordinator._data['data']['wind']
+        )
     
     @property
     def preset_mode(self):
         """Return the preset mode."""
-        return self._state_wind 
+        return self.coordinator._data['data']['wind']
 
     @property
     def preset_modes(self) -> list:
@@ -97,32 +95,28 @@ class KocomFan(FanEntity):
     def extra_state_attributes(self):
         """Attributes."""
         attributes = {
-            "Device type": self._state_attr['id'],
-            "Device state": self._state_power,
-            "Registration date": self._state_attr['reg_date']
+            "Device room": self.device['device_room'],
+            "Device type": self.device['device_type'],
+            "Registration Date": self.device['reg_date'],
+            "Sync date": self.coordinator._data['sync_date']
         }
         return attributes
-    
-    async def async_update(self):
-        """Get the latest state of the sensor."""
-        if self._hass_data is None: 
-            return
-        
-        vent_state = await self._hass_data.check_device_status('vent')
-        self._state_power = parse_device_info(vent_state, 'power')
-        self._state_wind = parse_device_info(vent_state, 'wind')
 
-    async def async_turn_on(self, speed: Optional[str] = None, percentage: Optional[int] = None, preset_mode: Optional[str] = None, **kwargs: Any) -> None:
+    async def async_turn_on(
+        self, 
+        speed: Optional[str] = None, 
+        percentage: Optional[int] = None, 
+        preset_mode: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
         """Turn on the fan."""
-        self._result = await self._hass_data.send_control_request('vent', self._state_attr['id'], 'power', '1')
-
-        self._state_power = parse_device_info(self._result, 'power') 
+        await self.coordinator.set_device_command(self.device_id, BIT_ON)
+        await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the fan off."""
-        self._result = await self._hass_data.send_control_request('vent', self._state_attr['id'], 'power', '0')
-
-        self._state_power = parse_device_info(self._result, 'power') 
+        await self.coordinator.set_device_command(self.device_id, BIT_OFF)
+        await self.coordinator.async_request_refresh()
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""
@@ -130,20 +124,8 @@ class KocomFan(FanEntity):
         
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of the fan."""
-        if not self._state_power:
-            self._result = await self._hass_data.send_control_request('vent', self._state_attr['id'], 'power', '1')
-            self._state_power = parse_device_info(self._result, 'power')
+        if not self.coordinator._data['data']['power']:
+            await self.coordinator.set_device_command(self.device_id, BIT_ON)
 
-        self._result = await self._hass_data.send_control_request('vent', self._state_attr['id'], 'wind', preset_mode)
-        self._state_wind = parse_device_info(self._result, 'wind')
-
-    @property
-    def device_info(self):
-        """Return information about the device."""
-        return {
-            "identifiers": {(DOMAIN, 'kocom')},
-             "name": "KOCOM",
-            "manufacturer": "Kocom Co, Ltd.",
-            "model": self._hass_data.login_data[PAIR_INFO]['list'][0]['alias'],
-            "sw_version": VERSION
-        }
+        await self.coordinator.set_device_command(self.device_id, preset_mode, "wind")
+        await self.coordinator.async_request_refresh()
