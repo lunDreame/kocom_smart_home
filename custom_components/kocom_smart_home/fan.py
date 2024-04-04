@@ -38,8 +38,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class KocomFan(KocomEntity, FanEntity): 
     def __init__(self, coordinator, device) -> None:
         self.device = device
-        self.device_id = device.get('device_id')
-        self.device_name = device.get('device_name')
+        self.device_id = device.get("device_id")
+        self.device_name = device.get("device_name")
         super().__init__(coordinator)
 
     @property
@@ -49,20 +49,20 @@ class KocomFan(KocomEntity, FanEntity):
     
     @property
     def name(self) -> str:
-        """Return the name of the sensor, if any."""
+        """Return the name of the device."""
         return self.device_name
 
     @property
-    def icon(self) -> str:
-        """Icon to use in the frontend, if any."""
-        if self.coordinator._data['data']['power']:
-            return ICON.get(self.coordinator._data['data']['wind'])
-        return ICON['off']
+    def icon(self):
+        """Return the icon of the fan."""
+        if self.coordinator._data["data"]["power"]:
+            return ICON.get(self.coordinator._data["data"]["wind"])
+        return ICON["off"]
 
     @property
     def is_on(self) -> bool:
-        """If the switch is currently on or off."""
-        return self.coordinator._data['data']['power']
+        """Return true if fan is on."""
+        return self.coordinator._data["data"]["power"]
 
     @property
     def supported_features(self) -> int: 
@@ -70,16 +70,16 @@ class KocomFan(KocomEntity, FanEntity):
         return FanEntityFeature.SET_SPEED
     
     @property
-    def percentage(self):
-        """Return the current percentage based speed."""
+    def percentage(self) -> Optional[int]:
+        """Return the current speed percentage."""
         return ordered_list_item_to_percentage(
-            SPEED_LIST, self.coordinator._data['data']['wind']
+            SPEED_LIST, self.coordinator._data["data"]["wind"]
         )
     
     @property
     def preset_mode(self):
         """Return the preset mode."""
-        return self.coordinator._data['data']['wind']
+        return self.coordinator._data["data"]["wind"]
 
     @property
     def preset_modes(self) -> list:
@@ -93,28 +93,27 @@ class KocomFan(KocomEntity, FanEntity):
 
     @property
     def extra_state_attributes(self):
-        """Attributes."""
-        attributes = {
-            "Device room": self.device['device_room'],
-            "Device type": self.device['device_type'],
-            "Registration Date": self.device['reg_date'],
-            "Sync date": self.coordinator._data['sync_date']
+        """Return the state attributes of the sensor."""
+        return {
+            "Device room": self.device["device_room"],
+            "Device type": self.device["device_type"],
+            "Registration Date": self.device["reg_date"],
+            "Sync date": self.coordinator._data["sync_date"]
         }
-        return attributes
 
     async def async_turn_on(
-        self, 
-        speed: Optional[str] = None, 
-        percentage: Optional[int] = None, 
+        self,
+        speed: Optional[str] = None,
+        percentage: Optional[int] = None,
         preset_mode: Optional[str] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
-        """Turn on the fan."""
+        """Turn on fan."""
         await self.coordinator.set_device_command(self.device_id, BIT_ON)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn the fan off."""
+        """Turn off fan."""
         await self.coordinator.set_device_command(self.device_id, BIT_OFF)
         await self.coordinator.async_request_refresh()
 
@@ -124,7 +123,7 @@ class KocomFan(KocomEntity, FanEntity):
         
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of the fan."""
-        if not self.coordinator._data['data']['power']:
+        if not self.coordinator._data["data"]["power"]:
             await self.coordinator.set_device_command(self.device_id, BIT_ON)
 
         await self.coordinator.set_device_command(self.device_id, preset_mode, "wind")
