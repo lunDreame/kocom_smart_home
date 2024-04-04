@@ -7,7 +7,7 @@ LOGGER = logging.getLogger(__name__)
 
 NAME = "Kocom Smart Home"
 DOMAIN = "kocom_smart_home"
-VERSION = "1.1.0"
+VERSION = "1.1.2"
 
 CONF_PHONE_NUMBER = "phone_number"
 CONF_WALLPAD_NUMBER = "wallpad_number"
