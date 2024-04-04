@@ -35,9 +35,9 @@
         },
         "error": {
             "network_error": "Network connection failure",
-            "invalid_phone": "Invalid phone number",
-            "invalid_auth": "Invalid wallpad auth number",
-            "auth_failure": "Wallpad authentication failed"
+            "invalid_phone_number": "Invalid phone number",
+            "invalid_auth_number": "Invalid wallpad auth number",
+            "wallpad_auth_failure": "Wallpad authentication failed"
         },
         "abort": {
             "registration_failed": "Device registration failed"
@@ -46,15 +46,24 @@
     "options": {
         "error": {
             "network_error": "Network connection failure",
-            "invalid_phone": "Invalid phone number",
-            "invalid_auth": "Invalid wallpad auth number",
-            "auth_failure": "Wallpad authentication failed"
+            "invalid_phone_number": "Invalid phone number",
+            "invalid_auth_number": "Invalid wallpad auth number",
+            "wallpad_auth_failure": "Wallpad authentication failed"
         },
         "step": {
             "init": {
-                "title": "Options Settings",
+                "title": "Adjusting Kocom Options",
                 "description": "",
-                "data": {}
+                "data": {
+                    "light_interval": "Light scan interval (seconds)",
+                    "concent_interval": "Outlet scan interval (seconds)",
+                    "heat_interval": "Heating scan interval (seconds)",
+                    "aircon_interval": "Air conditioner scan interval (seconds)",
+                    "gas_interval": "Gas scan interval (seconds)",
+                    "vent_interval": "Ventilation scan interval (seconds)",
+                    "energy_interval": "Energy scan interval (seconds)",
+                    "totalcontrol_interval": "Batch control scan interval (seconds)"
+                }
             }
         }
     }
