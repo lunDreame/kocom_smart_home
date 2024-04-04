@@ -29,8 +29,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class KocomSwitch(KocomEntity, SwitchEntity):
     def __init__(self, coordinator, device) -> None:
         self.device = device
-        self.device_id = device.get('device_id')
-        self.device_name = device.get('device_name')
+        self.device_id = device.get("device_id")
+        self.device_name = device.get("device_name")
         super().__init__(coordinator)
 
     @property
@@ -40,37 +40,37 @@ class KocomSwitch(KocomEntity, SwitchEntity):
     
     @property
     def name(self) -> str:
-        """Return the name of the sensor, if any."""
+        """Return the name of the device."""
         return self.device_name
     
     @property
-    def icon(self) -> str | None:
-        """Icon to use in the frontend, if any."""
-        return ICON[self.device['device_type']]
+    def icon(self):
+        """Return the icon of the sensor."""
+        return ICON[self.device["device_type"]]
 
     @property
     def is_on(self) -> bool:
-        """If the switch is currently on or off."""
+        """Return true if fan is on."""
         return self.coordinator._is_device_state(self.device_id)
 
     @property
     def extra_state_attributes(self):
-        """Attributes."""
+        """Return the state attributes of the sensor."""
         attributes = {
-            "Device room": self.device['device_room'],
-            "Device type": self.device['device_type'],
-            "Registration Date": self.device['reg_date'],
-            "Sync date": self.coordinator._data['sync_date']
+            "Device room": self.device["device_room"],
+            "Device type": self.device["device_type"],
+            "Registration Date": self.device["reg_date"],
+            "Sync date": self.coordinator._data["sync_date"]
         }
         return attributes
     
     async def async_turn_on(self, **kwargs):
-        """Turn the switch on."""
+        """Turn on switch."""
         await self.coordinator.set_device_command(self.device_id, BIT_ON)
         await self.coordinator.async_request_refresh()
         
     async def async_turn_off(self, **kwargs):
-        """Turn the switch off."""
+        """Turn off switch."""
         await self.coordinator.set_device_command(self.device_id, BIT_OFF)
         await self.coordinator.async_request_refresh()
 
