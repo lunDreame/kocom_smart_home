@@ -2,7 +2,7 @@
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DOMAIN, VERSION, LOGGER
+from .const import LOGGER
 from .coordinator import KocomCoordinator
 
 class KocomEntity(CoordinatorEntity[KocomCoordinator]):
