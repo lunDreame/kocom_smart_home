@@ -7,7 +7,7 @@ LOGGER = logging.getLogger(__name__)
 
 NAME = "Kocom Smart Home"
 DOMAIN = "kocom_smart_home"
-VERSION = "1.1.1"
+VERSION = "1.1.0"
 
 CONF_PHONE_NUMBER = "phone_number"
 CONF_WALLPAD_NUMBER = "wallpad_number"
@@ -31,10 +31,10 @@ BIT_ON = 1
 
 ENERGY_INFO = {
     "elec": ["전기 사용량", "mdi:flash", "kWh", SensorDeviceClass.ENERGY, "total_increasing"],
-    "heat": ["난방 사용량", "mdi:radiator", "㎥", None, None],
-    "hotwater": ["온수 사용량", "mdi:hot-tub", "㎥", None, None],
-    "gas": ["가스 사용량", "mdi:fire", "㎥", SensorDeviceClass.GAS, "total_increasing"],
-    "water": ["수도 사용량", "mdi:water-pump", "㎥", SensorDeviceClass.WATER, "total_increasing"]
+    "heat": ["난방 사용량", "mdi:radiator", "m³", None, None],
+    "hotwater": ["온수 사용량", "mdi:hot-tub", "m³", None, None],
+    "gas": ["가스 사용량", "mdi:fire", "m³", SensorDeviceClass.GAS, "total_increasing"],
+    "water": ["수도 사용량", "mdi:water-pump", "m³", SensorDeviceClass.WATER, "total_increasing"]
 }
 
 ENERGY_UNIT = {
