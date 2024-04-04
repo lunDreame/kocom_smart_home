@@ -7,7 +7,22 @@ LOGGER = logging.getLogger(__name__)
 
 NAME = "Kocom Smart Home"
 DOMAIN = "kocom_smart_home"
-VERSION = "1.1.0"
+VERSION = "1.1.1"
+
+CONF_PHONE_NUMBER = "phone_number"
+CONF_WALLPAD_NUMBER = "wallpad_number"
+
+MAX_ROOM_CNT = "max_room_cnt"
+MAX_SWITCH_CNT = "max_switch_cnt"
+
+LIGHT_INTERVAL = "light_interval"
+CONCENT_INTERVAL = "concent_interval"
+HEAT_INTERVAL = "heat_interval"
+AIRCON_INTERVAL = "aircon_interval"
+GAS_INTERVAL = "gas_interval"
+VENT_INTERVAL = "vent_interval"
+ENERGY_INTERVAL = "energy_interval"
+TOTALCTRL_INTERVAL = "totalcontrol_interval"
 
 TIMEOUT_SEC = 10
 
