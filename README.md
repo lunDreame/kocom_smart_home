@@ -10,7 +10,7 @@
 - 베타 버전으로, 현재는 소수의 사용자를 대상으로 통합을 제공합니다.
 - 더 좋은 아이디어가 있나요? [Pull requests](https://github.com/lunDreame/kocom_smart_home/pulls) 열어 등록해 주세요.
 
-이 통합이 당신에게 도움이 되셨나요? [카카오페이](https://qr.kakaopay.com/FWDWOBBmR)
+이 통합이 당신에게 도움이 되셨나요? [카카오페이](https://qr.kakaopay.com/FWDWOBBmR) [토스](https://toss.me/schicksal)
 
 ## 설치
 
