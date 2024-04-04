@@ -104,7 +104,7 @@ class KocomCoordinator(DataUpdateCoordinator):
         self._data.update({"sync_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
     async def _async_update_data(self):
-        interval_config = self.config_entry.options.get(self.name_interval)
+        interval_config = self.config_entry.options.get(self.name_interval, self.config_entry.data[self.name_interval])
         new_update_interval = timedelta(seconds=interval_config)
 
         if self.update_interval != new_update_interval:
