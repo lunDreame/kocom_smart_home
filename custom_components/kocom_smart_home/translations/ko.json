@@ -35,9 +35,9 @@
         },
         "error": {
             "network_error": "\uB124\uD2B8\uC6CC\uD06C \uC5F0\uACB0 \uC2E4\uD328",
-            "invalid_phone": "\uC798\uBABB\uB41C \uC804\uD654 \uBC88\uD638",
-            "invalid_auth": "\uC798\uBABB\uB41C \uC6D4\uD328\uB4DC \uC778\uC99D \uBC88\uD638",
-            "auth_failure": "\uC6D4\uD328\uB4DC \uC778\uC99D \uC2E4\uD328"
+            "invalid_phone_number": "\uC798\uBABB\uB41C \uC804\uD654 \uBC88\uD638",
+            "invalid_auth_number": "\uC798\uBABB\uB41C \uC6D4\uD328\uB4DC \uC778\uC99D \uBC88\uD638",
+            "wallpad_auth_failure": "\uC6D4\uD328\uB4DC \uC778\uC99D \uC2E4\uD328"
         },
         "abort": {
             "registration_failed": "\uC7A5\uCE58 \uB4F1\uB85D \uC2E4\uD328"
@@ -46,15 +46,24 @@
     "options": {
         "error": {
             "network_error": "\uB124\uD2B8\uC6CC\uD06C \uC5F0\uACB0 \uC2E4\uD328",
-            "invalid_phone": "\uC798\uBABB\uB41C \uC804\uD654 \uBC88\uD638",
-            "invalid_auth": "\uC798\uBABB\uB41C \uC6D4\uD328\uB4DC \uC778\uC99D \uBC88\uD638",
-            "auth_failure": "\uC6D4\uD328\uB4DC \uC778\uC99D \uC2E4\uD328"
+            "invalid_phone_number": "\uC798\uBABB\uB41C \uC804\uD654 \uBC88\uD638",
+            "invalid_auth_number": "\uC798\uBABB\uB41C \uC6D4\uD328\uB4DC \uC778\uC99D \uBC88\uD638",
+            "wallpad_auth_failure": "\uC6D4\uD328\uB4DC \uC778\uC99D \uC2E4\uD328"
         },
         "step": {
             "init": {
-                "title": "\uC635\uC158 \uC124\uC815",
+                "title": "\ucf54\ucf64\u0020\uc635\uc158\u0020\uc870\uc815\u000d",
                 "description": "",
-                "data": {}
+                "data": {
+                    "light_interval": "\uC870\uBA85 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "concent_interval": "\uCF58\uC13C\uD2B8 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "heat_interval": "\uB09C\uBC29 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "aircon_interval": "\uC5D0\uC5B4\uCEE8 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "gas_interval": "\uAC00\uC2A4 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "vent_interval": "\uD658\uAE30 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "energy_interval": "\uC5D0\uB108\uC9C0 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
+                    "totalcontrol_interval": "\uC77C\uAD04 \uC81C\uC5B4 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)"
+                }
             }
         }
     }
