@@ -66,11 +66,11 @@ class KocomSwitch(KocomEntity, SwitchEntity):
     
     async def async_turn_on(self, **kwargs):
         """Turn on switch."""
-        await self.coordinator.set_device_command(self.device_id, BIT_ON)
+        await self.coordinator.set_device_command(self.device_id, power=BIT_ON)
         await self.coordinator.async_request_refresh()
         
     async def async_turn_off(self, **kwargs):
         """Turn off switch."""
-        await self.coordinator.set_device_command(self.device_id, BIT_OFF)
+        await self.coordinator.set_device_command(self.device_id, power=BIT_OFF)
         await self.coordinator.async_request_refresh()
 

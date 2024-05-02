@@ -53,13 +53,6 @@ class KocomFan(KocomEntity, FanEntity):
         return self.device_name
 
     @property
-    def icon(self):
-        """Return the icon of the fan."""
-        if self.coordinator._data["data"]["power"]:
-            return ICON.get(self.coordinator._data["data"]["wind"])
-        return ICON["off"]
-
-    @property
     def is_on(self) -> bool:
         """Return true if fan is on."""
         return self.coordinator._data["data"]["power"]
@@ -109,12 +102,12 @@ class KocomFan(KocomEntity, FanEntity):
         **kwargs: Any,
     ) -> None:
         """Turn on fan."""
-        await self.coordinator.set_device_command(self.device_id, BIT_ON)
+        await self.coordinator.set_device_command(self.device_id, power=BIT_ON)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off fan."""
-        await self.coordinator.set_device_command(self.device_id, BIT_OFF)
+        await self.coordinator.set_device_command(self.device_id, power=BIT_OFF)
         await self.coordinator.async_request_refresh()
 
     async def async_set_percentage(self, percentage: int) -> None:
@@ -124,7 +117,7 @@ class KocomFan(KocomEntity, FanEntity):
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of the fan."""
         if not self.coordinator._data["data"]["power"]:
-            await self.coordinator.set_device_command(self.device_id, BIT_ON)
+            await self.coordinator.set_device_command(self.device_id, power=BIT_ON)
 
-        await self.coordinator.set_device_command(self.device_id, preset_mode, "wind")
+        await self.coordinator.set_device_command(self.device_id, wind=preset_mode)
         await self.coordinator.async_request_refresh()

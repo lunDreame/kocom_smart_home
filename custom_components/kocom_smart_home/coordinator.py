@@ -5,22 +5,39 @@ from datetime import timedelta
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, VERSION, LOGGER, ENERGY_INFO, ENERGY_UNIT
+from .const import DOMAIN, VERSION, LOGGER
 from .api import parse_device_info
+
+ENERGY_INFO = {
+    "elec": ["전기 사용량", "mdi:flash", "kWh", SensorDeviceClass.ENERGY, "total_increasing"],
+    "heat": ["난방 사용량", "mdi:radiator", "m³", None, None],
+    "hotwater": ["온수 사용량", "mdi:hot-tub", "m³", None, None],
+    "gas": ["가스 사용량", "mdi:fire", "m³", SensorDeviceClass.GAS, "total_increasing"],
+    "water": ["수도 사용량", "mdi:water-pump", "m³", SensorDeviceClass.WATER, "total_increasing"]
+}
+
+ENERGY_UNIT = {
+    "value": "우리집",
+    "avg": "이번달 평균",
+    "price": "예상 요금",
+    "_previousvalue": "전월 우리집",
+    "_previousavg": "전월 평균",
+    "_previousprice": "전월 예상 요금",   
+}
 
 class KocomCoordinator(DataUpdateCoordinator):
     """Kocom update coordinator."""
-    is_room_device = False
+    irdev = False
 
     def __init__(self, name, api, hass, entry) -> None:
         self.name = name
         self.api = api
         self.hass = hass
-        self.name_interval = f"{name}_interval"
+        self.n_interval = f"{name}_interval"
         
-        update_interval = entry.data[self.name_interval]
+        update_interval = entry.data[self.n_interval]
         if name in ["light", "concent", "heat", "aircon"]:
-            self.is_room_device = True
+            self.irdev = True
             self._data = api.device_settings[name]
         else:
             self._data = {"data": {}, "sync_date": ""}
@@ -40,6 +57,8 @@ class KocomCoordinator(DataUpdateCoordinator):
         if control_response is None:
             device_state = await self.api.check_device_status(self.name)
         else:
+            if control_response["type"] == "totalcontrol":
+                control_response["entry"][0]["list"][0]["value"] = ~(int(control_response["entry"][0]["list"][0]["value"]))
             device_state = control_response
 
         self._data["data"].update({
@@ -66,7 +85,7 @@ class KocomCoordinator(DataUpdateCoordinator):
             LOGGER.warning("Unable to update energy usage information.")
     
     def _is_device_state(self, unique_id: str, function: str = "power") -> bool:
-        if self.is_room_device:
+        if self.irdev:
             id_parts = unique_id.split("_")
             id = id_parts[0].title()
             if id_parts[1] == "00":
@@ -75,7 +94,7 @@ class KocomCoordinator(DataUpdateCoordinator):
         return self._data["data"]["power"]
         
     def _interpret_command(
-        self, unique_id: str, command_value: int, command_name: str
+        self, unique_id: str, command_name: str, command_value: int
     ) -> tuple:
         id_parts = unique_id.split("_")
         id = id_parts[0].title()
@@ -104,12 +123,11 @@ class KocomCoordinator(DataUpdateCoordinator):
         self._data.update({"sync_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
     async def _async_update_data(self):
-        interval_config = self.config_entry.options.get(self.name_interval, self.config_entry.data[self.name_interval])
-        new_update_interval = timedelta(seconds=interval_config)
+        n_interval = self.config_entry.options.get(self.n_interval)
 
-        if self.update_interval != new_update_interval:
-            LOGGER.info("Changing update %s from %s to %s", self.name_interval, self.update_interval, new_update_interval)
-            self.update_interval = new_update_interval
+        if n_interval is not None:
+            self.update_interval = timedelta(seconds=n_interval)
+            LOGGER.info("Changing update %s to %s", self.n_interval, n_interval)
 
         if self.name in ["gas", "vent", "totalcontrol"]:
             return await self.update_single_device()
@@ -119,14 +137,14 @@ class KocomCoordinator(DataUpdateCoordinator):
             return await self.update_room_device()
     
     async def set_device_command(
-        self, unique_id: str, command_value: int, command_name: str = "power"
+        self, unique_id: str, kwargs**
     ) -> None:
-        id, name, value = self._interpret_command(unique_id, command_value, command_name)
+        id, name, value = self._interpret_command(unique_id, name, value for name, value in kwargs.items())
 
         control_response = await self.api.send_control_request(
             self.name, id, name, value
         )
-        if self.is_room_device:
+        if self.irdev:
             self.api.update_device_data(control_response)
         else:
             await self.get_single_device(control_response)
@@ -164,8 +182,6 @@ class KocomCoordinator(DataUpdateCoordinator):
         devices = []
         if self.name == "energy":
             devices = await self.specify_elements()
-        elif self.name == "login": 
-            devices = []
         elif self.name in ["gas", "vent", "totalcontrol"]:
             single_device = await self.get_single_device()
             entry_data = {

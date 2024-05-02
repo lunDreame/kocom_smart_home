@@ -123,28 +123,28 @@ class KocomClimate(KocomEntity, ClimateEntity):
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
         """Set new target hvac mode."""
         if hvac_mode == self.mode:
-            await self.coordinator.set_device_command(self.device_id, BIT_ON)
+            await self.coordinator.set_device_command(self.device_id, power=BIT_ON)
         elif hvac_mode == HVACMode.OFF:
-            await self.coordinator.set_device_command(self.device_id, BIT_OFF)
+            await self.coordinator.set_device_command(self.device_id, power=BIT_OFF)
 
         await self.coordinator.async_request_refresh()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new target preset mode."""
         if preset_mode == PRESET_AWAY:
-            await self.coordinator.set_device_command(self.device_id, BIT_ON)
+            await self.coordinator.set_device_command(self.device_id, power=BIT_ON)
 
-            await self.coordinator.set_device_command(self.device_id, BIT_ON, "mode")
+            await self.coordinator.set_device_command(self.device_id, mode=BIT_ON)
         elif preset_mode == PRESET_NONE:
-            await self.coordinator.set_device_command(self.device_id, BIT_OFF, "mode")
+            await self.coordinator.set_device_command(self.device_id, mode=BIT_OFF)
 
         await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
-        await self.coordinator.set_device_command(self.device_id, BIT_ON)
+        await self.coordinator.set_device_command(self.device_id, power=BIT_ON)
         await self.coordinator.set_device_command(
-            self.device_id, kwargs.get(ATTR_TEMPERATURE, 20), "settemp"
+            self.device_id, settemp=kwargs.get(ATTR_TEMPERATURE, 20)
         )
 
         await self.coordinator.async_request_refresh()

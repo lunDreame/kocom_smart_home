@@ -17,18 +17,6 @@ from .api import KocomHomeAPI
 from .const import (
     DOMAIN,
     LOGGER,
-    CONF_PHONE_NUMBER,
-    CONF_WALLPAD_NUMBER,
-    MAX_ROOM_CNT,
-    MAX_SWITCH_CNT,
-    LIGHT_INTERVAL,
-    CONCENT_INTERVAL,
-    HEAT_INTERVAL,
-    AIRCON_INTERVAL,
-    GAS_INTERVAL,
-    VENT_INTERVAL,
-    ENERGY_INTERVAL,
-    TOTALCTRL_INTERVAL
 )
 
 def int_between(min_int, max_int):
@@ -61,11 +49,11 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self.data = user_input
 
-            if not re.match(r"^010\d{8}$", self.data[CONF_PHONE_NUMBER]):
+            if not re.match(r"^010\d{8}$", self.data["phone_number"]):
                 errors["base"] = "invalid_phone_number"
             else:
                 self.api = KocomHomeAPI(self.hass)
-                sphone_login = await self.api.request_sphone_login(self.data[CONF_PHONE_NUMBER])
+                sphone_login = await self.api.request_sphone_login(self.data["phone_number"])
 
                 if isinstance(sphone_login, bool) and not sphone_login:
                     errors["base"] = "network_error"
@@ -80,7 +68,7 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user", 
-            data_schema=vol.Schema({vol.Required(CONF_PHONE_NUMBER): cv.string}),
+            data_schema=vol.Schema({vol.Required("phone_number"): cv.string}),
             errors=errors,
             last_step=False,
         )
@@ -95,10 +83,10 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self.data = user_input
 
-            if not re.match(r"^\d{8}$", self.data[CONF_WALLPAD_NUMBER]):
+            if not re.match(r"^\d{8}$", self.data["wallpad_number"]):
                 errors["base"] = "invalid_auth_number"
             else:
-                pairnum_login = await self.api.request_pairnum_login(self.data[CONF_WALLPAD_NUMBER])
+                pairnum_login = await self.api.request_pairnum_login(self.data["wallpad_number"])
                 if pairnum_login.get("error-msg") == "PairNum Fail":
                     errors["base"] = "wallpad_auth_failure"
             
@@ -113,7 +101,7 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="wallpad",
-            data_schema=vol.Schema({vol.Required(CONF_WALLPAD_NUMBER): cv.string}),
+            data_schema=vol.Schema({vol.Required("wallpad_number"): cv.string}),
             errors=errors,
             last_step=False,
         )
@@ -125,22 +113,22 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
         """Defines the Kocom options."""
         if user_input is not None:
             return self.async_create_entry(
-                title=self.data[CONF_PHONE_NUMBER],
+                title=self.data["phone_number"],
                 data={**self.data, **user_input}
             )
 
         data_schema = vol.Schema(
             {
-                vol.Required(MAX_ROOM_CNT, default=4): int_between(1, 6),
-                vol.Required(MAX_SWITCH_CNT, default=2): int_between(1, 8),
-                vol.Required(LIGHT_INTERVAL, default=120): cv.positive_int,
-                vol.Required(CONCENT_INTERVAL, default=300): cv.positive_int,
-                vol.Required(HEAT_INTERVAL, default=300): cv.positive_int,
-                vol.Required(AIRCON_INTERVAL, default=300): cv.positive_int,
-                vol.Required(GAS_INTERVAL, default=600): cv.positive_int,
-                vol.Required(VENT_INTERVAL, default=600): cv.positive_int,
-                vol.Required(ENERGY_INTERVAL, default=1200): cv.positive_int,
-                vol.Required(TOTALCTRL_INTERVAL, default=900): cv.positive_int,
+                vol.Required("max_room_cnt", default=4): int_between(1, 6),
+                vol.Required("max_switch_cnt", default=2): int_between(1, 8),
+                vol.Required("light_interval", default=120): cv.positive_int,
+                vol.Required("concent_interval", default=300): cv.positive_int,
+                vol.Required("heat_interval", default=300): cv.positive_int,
+                vol.Required("aircon_interval", default=300): cv.positive_int,
+                vol.Required("gas_interval", default=600): cv.positive_int,
+                vol.Required("vent_interval", default=600): cv.positive_int,
+                vol.Required("energy_interval", default=1200): cv.positive_int,
+                vol.Required("totalcontrol_interval", default=900): cv.positive_int,
             }
         )
 
@@ -168,44 +156,44 @@ class KocomOptionsFlowHandler(OptionsFlow):
         
         data_schema = vol.Schema({
                 vol.Required(
-                    LIGHT_INTERVAL,
+                    "light_interval",
                     default=self.config_entry.options.get(
-                        LIGHT_INTERVAL, self.config_entry.data[LIGHT_INTERVAL])
+                        "light_interval", self.config_entry.data["light_interval"])
                     ): cv.positive_int,
                 vol.Required(
-                    CONCENT_INTERVAL,
+                    "concent_interval",
                     default=self.config_entry.options.get(
-                        CONCENT_INTERVAL, self.config_entry.data[CONCENT_INTERVAL])
+                        "concent_interval", self.config_entry.data["concent_interval"])
                     ): cv.positive_int,
                 vol.Required(
-                    HEAT_INTERVAL,
+                    "heat_interval",
                     default=self.config_entry.options.get(
-                        HEAT_INTERVAL, self.config_entry.data[HEAT_INTERVAL])
+                        "heat_interval", self.config_entry.data["heat_interval"])
                     ): cv.positive_int,
                 vol.Required(
-                    AIRCON_INTERVAL,
+                    "aircon_interval",
                     default=self.config_entry.options.get(
-                        AIRCON_INTERVAL, self.config_entry.data[AIRCON_INTERVAL])
+                        "aircon_interval", self.config_entry.data["aircon_interval"])
                     ): cv.positive_int,
                 vol.Required(
-                    GAS_INTERVAL,
+                    "gas_interval",
                     default=self.config_entry.options.get(
-                        GAS_INTERVAL, self.config_entry.data[GAS_INTERVAL])
+                        "gas_interval", self.config_entry.data["gas_interval"])
                     ): cv.positive_int,
                 vol.Required(
-                    VENT_INTERVAL,
+                    "vent_interval",
                     default=self.config_entry.options.get(
-                        VENT_INTERVAL, self.config_entry.data[VENT_INTERVAL])
+                        "vent_interval", self.config_entry.data["vent_interval"])
                     ): cv.positive_int,
                 vol.Required(
-                    ENERGY_INTERVAL,
+                    "energy_interval",
                     default=self.config_entry.options.get(
-                        ENERGY_INTERVAL, self.config_entry.data[ENERGY_INTERVAL])
+                        "energy_interval", self.config_entry.data["energy_interval"])
                     ): cv.positive_int,
                 vol.Required(
-                    TOTALCTRL_INTERVAL,
+                    "totalcontrol_interval",
                     default=self.config_entry.options.get(
-                        TOTALCTRL_INTERVAL, self.config_entry.data[TOTALCTRL_INTERVAL])
+                        "totalcontrol_interval", self.config_entry.data["totalcontrol_interval"])
                     ): cv.positive_int,
             }
         )

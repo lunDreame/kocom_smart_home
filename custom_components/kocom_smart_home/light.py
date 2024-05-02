@@ -65,11 +65,11 @@ class KocomLight(KocomEntity, LightEntity):
         
     async def async_turn_on(self, **kwargs):
         """Turn on light."""
-        await self.coordinator.set_device_command(self.device_id, BIT_ON)
+        await self.coordinator.set_device_command(self.device_id, power=BIT_ON)
         await self.coordinator.async_request_refresh()
         
     async def async_turn_off(self, **kwargs):
         """Turn off light."""
-        await self.coordinator.set_device_command(self.device_id, BIT_OFF)
+        await self.coordinator.set_device_command(self.device_id, power=BIT_OFF)
         await self.coordinator.async_request_refresh()
 

@@ -6,7 +6,7 @@ from datetime import datetime
 
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import LOGGER, TIMEOUT_SEC, MAX_ROOM_CNT, MAX_SWITCH_CNT
+from .const import LOGGER, TIMEOUT_SEC
 from .utils import generate_digest_header, generate_fcm_token
 
 
@@ -235,9 +235,7 @@ class KocomHomeAPI:
             ),
             "Cookie": self.kbranch_tokens["cookie"],
         }
-        data = {
-            "pairnum": wallpad_number
-        }
+        data = {"pairnum": wallpad_number}
 
         try: 
             response = await session.get(url, headers=headers, json=data, timeout=TIMEOUT_SEC)
@@ -284,10 +282,7 @@ class KocomHomeAPI:
             ),
             "Cookie": self.apartment_tokens["cookie"],
         }
-        data = {
-            "type": device,
-            "cmd": "status"
-        }
+        data = {"type": device, "cmd": "status"}
 
         try:
             response = await session.get(url+path, headers=headers, json=data, timeout=TIMEOUT_SEC)
@@ -342,8 +337,8 @@ class KocomHomeAPI:
     def extract_meaningful_data(self, response: dict) -> dict:
         """Remove meaningless data from lights/concents"""
         try:
-            max_room_cnt = self.entry.data.get(MAX_ROOM_CNT)
-            max_switch_cnt = self.entry.data.get(MAX_SWITCH_CNT)
+            max_room_cnt = self.entry.data.get("max_room_cnt")
+            max_switch_cnt = self.entry.data.get("max_switch_cnt")
         
             entry_list = response.get("entry", [])
             response["entry"] = [entry for entry in entry_list if int(entry.get("id", "")[2:]) <= max_room_cnt]
