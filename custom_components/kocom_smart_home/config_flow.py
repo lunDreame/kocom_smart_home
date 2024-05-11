@@ -1,7 +1,9 @@
 """Adds config flow for Kocom Smart Home"""
 import re
+import asyncio
 import voluptuous as vol
 from typing import Any
+from functools import partial
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.core import callback
@@ -14,10 +16,7 @@ from homeassistant.config_entries import (
 )
 
 from .api import KocomHomeAPI
-from .const import (
-    DOMAIN,
-    LOGGER,
-)
+from .const import DOMAIN, LOGGER
 
 def int_between(min_int, max_int):
     """Return an integer between 'min_int' and 'max_int'."""
@@ -39,8 +38,7 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
         return KocomOptionsFlowHandler(config_entry)
 
     async def async_step_user(
-        self, 
-        user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
         """Handle a flow initiated by the user."""
         errors = {}
@@ -53,7 +51,9 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_phone_number"
             else:
                 self.api = KocomHomeAPI(self.hass)
-                sphone_login = await self.api.request_sphone_login(self.data["phone_number"])
+                sphone_login = await self.api.request_sphone_login(
+                    self.data["phone_number"]
+                )
 
                 if isinstance(sphone_login, bool) and not sphone_login:
                     errors["base"] = "network_error"
@@ -67,15 +67,12 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_options()
 
         return self.async_show_form(
-            step_id="user", 
-            data_schema=vol.Schema({vol.Required("phone_number"): cv.string}),
-            errors=errors,
-            last_step=False,
+            step_id="user", data_schema=vol.Schema({
+                vol.Required("phone_number"): cv.string}), errors=errors,
         )
     
     async def async_step_wallpad(
-        self, 
-        user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
         """Request information entered through the user to the wallpad."""
         errors = {}
@@ -86,7 +83,9 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
             if not re.match(r"^\d{8}$", self.data["wallpad_number"]):
                 errors["base"] = "invalid_auth_number"
             else:
-                pairnum_login = await self.api.request_pairnum_login(self.data["wallpad_number"])
+                pairnum_login = await self.api.request_pairnum_login(
+                    self.data["wallpad_number"]
+                )
                 if pairnum_login.get("error-msg") == "PairNum Fail":
                     errors["base"] = "wallpad_auth_failure"
             
@@ -100,21 +99,17 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
                     return await self.async_step_options()
 
         return self.async_show_form(
-            step_id="wallpad",
-            data_schema=vol.Schema({vol.Required("wallpad_number"): cv.string}),
-            errors=errors,
-            last_step=False,
+            step_id="wallpad", data_schema=vol.Schema({
+                vol.Required("wallpad_number"): cv.string}), errors=errors,
         )
-   
+
     async def async_step_options(
-        self, 
-        user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
         """Defines the Kocom options."""
         if user_input is not None:
             return self.async_create_entry(
-                title=self.data["phone_number"],
-                data={**self.data, **user_input}
+                title=self.data["phone_number"], data={**self.data, **user_input}
             )
 
         data_schema = vol.Schema(
@@ -133,9 +128,7 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
         return self.async_show_form(
-            step_id="options",
-            data_schema=data_schema,
-            errors={},
+            step_id="options", data_schema=data_schema, errors={},
         )
 
 
@@ -147,60 +140,56 @@ class KocomOptionsFlowHandler(OptionsFlow):
         self.config_entry = config_entry
     
     async def async_step_init(
-        self, 
-        user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle options flow."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
         
         data_schema = vol.Schema({
-                vol.Required(
-                    "light_interval",
-                    default=self.config_entry.options.get(
-                        "light_interval", self.config_entry.data["light_interval"])
-                    ): cv.positive_int,
-                vol.Required(
-                    "concent_interval",
-                    default=self.config_entry.options.get(
-                        "concent_interval", self.config_entry.data["concent_interval"])
-                    ): cv.positive_int,
-                vol.Required(
-                    "heat_interval",
-                    default=self.config_entry.options.get(
-                        "heat_interval", self.config_entry.data["heat_interval"])
-                    ): cv.positive_int,
-                vol.Required(
-                    "aircon_interval",
-                    default=self.config_entry.options.get(
-                        "aircon_interval", self.config_entry.data["aircon_interval"])
-                    ): cv.positive_int,
-                vol.Required(
-                    "gas_interval",
-                    default=self.config_entry.options.get(
-                        "gas_interval", self.config_entry.data["gas_interval"])
-                    ): cv.positive_int,
-                vol.Required(
-                    "vent_interval",
-                    default=self.config_entry.options.get(
-                        "vent_interval", self.config_entry.data["vent_interval"])
-                    ): cv.positive_int,
-                vol.Required(
-                    "energy_interval",
-                    default=self.config_entry.options.get(
-                        "energy_interval", self.config_entry.data["energy_interval"])
-                    ): cv.positive_int,
-                vol.Required(
-                    "totalcontrol_interval",
-                    default=self.config_entry.options.get(
-                        "totalcontrol_interval", self.config_entry.data["totalcontrol_interval"])
-                    ): cv.positive_int,
+            vol.Required(
+                "light_interval",
+                default=self.config_entry.options.get(
+                    "light_interval", self.config_entry.data["light_interval"])
+                ): cv.positive_int,
+            vol.Required(
+                "concent_interval",
+                default=self.config_entry.options.get(
+                    "concent_interval", self.config_entry.data["concent_interval"])
+                ): cv.positive_int,
+            vol.Required(
+                "heat_interval",
+                default=self.config_entry.options.get(
+                    "heat_interval", self.config_entry.data["heat_interval"])
+                ): cv.positive_int,
+            vol.Required(
+                "aircon_interval",
+                default=self.config_entry.options.get(
+                    "aircon_interval", self.config_entry.data["aircon_interval"])
+                ): cv.positive_int,
+            vol.Required(
+                "gas_interval",
+                default=self.config_entry.options.get(
+                    "gas_interval", self.config_entry.data["gas_interval"])
+                ): cv.positive_int,
+            vol.Required(
+                "vent_interval",
+                default=self.config_entry.options.get(
+                    "vent_interval", self.config_entry.data["vent_interval"])
+                ): cv.positive_int,
+            vol.Required(
+                "energy_interval",
+                default=self.config_entry.options.get(
+                    "energy_interval", self.config_entry.data["energy_interval"])
+                ): cv.positive_int,
+            vol.Required(
+                "totalcontrol_interval",
+                default=self.config_entry.options.get(
+                    "totalcontrol_interval", self.config_entry.data["totalcontrol_interval"])
+                ): cv.positive_int,
             }
         )
 
         return self.async_show_form(
-            step_id="init",
-            data_schema=data_schema,
-            errors={},
+            step_id="init", data_schema=data_schema, errors={},
         )
-

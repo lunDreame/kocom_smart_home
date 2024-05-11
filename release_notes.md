@@ -1,5 +1,7 @@
-### V1.2.0-beta
-- Devalop Add Functions
+### V1.1.3
+- Refactoring
+- Troubleshooting batch-out behavior
+- Troubleshooting Ventilation Behavior
 
 ### V1.1.2
 - 단위 오타 수정

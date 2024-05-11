@@ -131,7 +131,7 @@ class KocomHomeAPI:
         session = async_get_clientsession(self.hass)         
 
         await self.fetch_apartment_server_token()
-                                         
+
         headers = {
             "Authorization": generate_digest_header(
                 self.user_credentials["user_id"],
@@ -235,7 +235,9 @@ class KocomHomeAPI:
             ),
             "Cookie": self.kbranch_tokens["cookie"],
         }
-        data = {"pairnum": wallpad_number}
+        data = {
+            "pairnum": wallpad_number
+        }
 
         try: 
             response = await session.get(url, headers=headers, json=data, timeout=TIMEOUT_SEC)
@@ -272,7 +274,7 @@ class KocomHomeAPI:
         session = async_get_clientsession(self.hass)         
 
         await self.fetch_apartment_server_token()
-                                         
+
         headers = {
             "Authorization": generate_digest_header(
                 self.user_credentials["user_id"],
@@ -282,7 +284,10 @@ class KocomHomeAPI:
             ),
             "Cookie": self.apartment_tokens["cookie"],
         }
-        data = {"type": device, "cmd": "status"}
+        data = {
+            "type": device,
+            "cmd": "status"
+        }
 
         try:
             response = await session.get(url+path, headers=headers, json=data, timeout=TIMEOUT_SEC)
@@ -371,4 +376,3 @@ class KocomHomeAPI:
                         break
         except Exception as ex:
             LOGGER.error("Failed to update the device settings: %s", ex)
-
