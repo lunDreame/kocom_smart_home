@@ -1,8 +1,13 @@
+### V1.1.3
+- Refactoring
+- Troubleshooting batch-out behavior
+- Troubleshooting Ventilation Behavior
+
 ### V1.1.2
-단위 오타 수정
+- 단위 오타 수정
 
 ### V1.1.1
-최적화
+- 최적화
 
 ### V1.1.0
 - 최대 방, 스위치 개수 지정 가능

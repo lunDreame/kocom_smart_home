@@ -17,4 +17,3 @@ def generate_fcm_token(input_string, length=163) -> str:
     fcm_token = ''.join(random.choice(characters) for _ in range(length))
     LOGGER.debug("Generated FCM Token: %s", fcm_token)
     return fcm_token
-
