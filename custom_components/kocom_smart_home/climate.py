@@ -27,6 +27,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class KocomClimate(KocomEntity, ClimateEntity):
+    
+    _enable_turn_on_off_backwards_compatibility = False
+    
     def __init__(self, coordinator, device) -> None:
         self._device = device
         self._device_id = device["device_id"]
