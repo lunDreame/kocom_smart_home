@@ -8,7 +8,7 @@ LOGGER = logging.getLogger(__name__)
 
 NAME = "Kocom Smart Home"
 DOMAIN = "kocom_smart_home"
-#VERSION = "1.1.5"
+VERSION = "1.1.5"
 
 TIMEOUT_SEC = 10
 
