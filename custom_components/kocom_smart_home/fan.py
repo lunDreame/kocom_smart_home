@@ -51,7 +51,7 @@ class KocomFan(KocomEntity, FanEntity):
     @property
     def is_on(self) -> bool:
         """Return true if fan is on."""
-        status = self.coordinator.get_device_status(None)
+        status = self.coordinator.get_device_status()
         return status
 
     @property
@@ -62,13 +62,13 @@ class KocomFan(KocomEntity, FanEntity):
     @property
     def percentage(self) -> Optional[int]:
         """Return the current speed percentage."""
-        status = self.coordinator.get_device_status(None, "wind")
+        status = self.coordinator.get_device_status(function="wind")
         return ordered_list_item_to_percentage(SPEED_LIST, status)
     
     @property
     def preset_mode(self):
         """Return the preset mode."""
-        status = self.coordinator.get_device_status(None, "wind")
+        status = self.coordinator.get_device_status(function="wind")
         return status
 
     @property
@@ -99,19 +99,19 @@ class KocomFan(KocomEntity, FanEntity):
         **kwargs: Any,
     ) -> None:
         """Turn on fan."""
-        await self.coordinator.set_device_command(self._device_id, 1)
+        await self.coordinator.set_device_command(self.unique_id, 1)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off fan."""
-        await self.coordinator.set_device_command(self._device_id, 0)
+        await self.coordinator.set_device_command(self.unique_id, 0)
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""
         if percentage == 0:
-            await self.coordinator.set_device_command(self._device_id, 0)
+            await self.coordinator.set_device_command(self.unique_id, 0)
         else:
             await self.coordinator.set_device_command(
-                self._device_id, 
+                self.unique_id, 
                 percentage_to_ordered_list_item(SPEED_LIST, percentage),
                 "wind"
             )

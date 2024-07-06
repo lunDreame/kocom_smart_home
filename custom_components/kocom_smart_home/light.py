@@ -45,7 +45,7 @@ class KocomLight(KocomEntity, LightEntity):
     @property
     def is_on(self) -> bool:
         """Return true if fan is on."""
-        status = self.coordinator.get_device_status(self._device_id)
+        status = self.coordinator.get_device_status(self.unique_id)
         return status
 
     @property
@@ -70,8 +70,8 @@ class KocomLight(KocomEntity, LightEntity):
         
     async def async_turn_on(self, **kwargs):
         """Turn on light."""
-        await self.coordinator.set_device_command(self._device_id, 1)
+        await self.coordinator.set_device_command(self.unique_id, 1)
         
     async def async_turn_off(self, **kwargs):
         """Turn off light."""
-        await self.coordinator.set_device_command(self._device_id, 0)
+        await self.coordinator.set_device_command(self.unique_id, 0)

@@ -67,7 +67,9 @@ class KocomSensor(KocomEntity, SensorEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return self.coordinator._energy_usage_state(self._device_id, self._device["reg_date"])
+        return self.coordinator._energy_usage_state(
+            self.unique_id, self._device["reg_date"]
+        )
 
     @property
     def extra_state_attributes(self):
