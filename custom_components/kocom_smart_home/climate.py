@@ -35,16 +35,11 @@ class KocomClimate(KocomEntity, ClimateEntity):
         self._device_id = device["device_id"]
         self._device_name = device["device_name"]
         self._device_type = device["device_type"]
-        self._hvac_mode = [HVACMode.OFF]
-        if self._device_type == "heat":
-            self._hvac_mode.append(HVACMode.HEAT)
-        else:
-            self._hvac_mode.append(HVACMode.COOL)
-        self._features = (
-            ClimateEntityFeature.TARGET_TEMPERATURE|
-            ClimateEntityFeature.TURN_ON|
-            ClimateEntityFeature.TURN_OFF
-        )
+
+        self._hvac_modes = [HVACMode.OFF, HVACMode.HEAT] # Default
+        self._supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
+        self._supported_features |= ClimateEntityFeature.TURN_ON
+        self._supported_features |= ClimateEntityFeature.TURN_OFF
         super().__init__(coordinator)
 
     @property
@@ -60,13 +55,13 @@ class KocomClimate(KocomEntity, ClimateEntity):
     @property
     def current_temperature(self) -> float:
         """Return the current temperature."""
-        status = self.coordinator.get_device_status(self._device_id, "nowtemp")
+        status = self.coordinator.get_device_status(self.unique_id, "nowtemp")
         return status
 
     @property
     def target_temperature(self) -> float:
         """Return the target temperature."""
-        status = self.coordinator.get_device_status(self._device_id, "settemp")
+        status = self.coordinator.get_device_status(self.unique_id, "settemp")
         return status
 
     @property
@@ -92,43 +87,36 @@ class KocomClimate(KocomEntity, ClimateEntity):
     @property
     def hvac_modes(self) -> list:
         """Return the list of available hvac operation modes."""
-        return self._hvac_mode
+        if self._device_type == "aircon":
+            self._hvac_modes[1] = HVACMode.COOL
+        return self._hvac_modes
     
     @property
     def hvac_mode(self):
         """Return hvac operation ie. heat, cool mode."""
-        status = self.coordinator.get_device_status(self._device_id)
-        if status:
-            return self._hvac_mode[1]
-        else:
-            return self._hvac_mode[0]
+        status = self.coordinator.get_device_status(self.unique_id)
+        return self._hvac_modes[1] if status else HVACMode.OFF
     
     @property
     def preset_modes(self) -> list:
         """Return the list of available preset modes."""
         if self._device_type == "heat":
             return [PRESET_AWAY, PRESET_NONE]
-        else:
-            return []
     
     @property
     def preset_mode(self):
         """Return the current preset mode, e.g., home, away, temp.
         Requires ClimateEntityFeature.PRESET_MODE.
         """
-        status = self.coordinator.get_device_status(self._device_id, "mode")
-        if status:
-            return PRESET_AWAY
-        else:
-            return PRESET_NONE
+        status = self.coordinator.get_device_status(self.unique_id, "mode")
+        return PRESET_AWAY if status else PRESET_NONE
 
     @property
     def supported_features(self):
         """Return the list of supported features."""
         if self._device_type == "heat":
-            self._features |= ClimateEntityFeature.PRESET_MODE
-
-        return self._features
+            self._supported_features |= ClimateEntityFeature.PRESET_MODE
+        return self._supported_features
 
     @property
     def extra_state_attributes(self):
@@ -142,22 +130,22 @@ class KocomClimate(KocomEntity, ClimateEntity):
     
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
         """Set new target hvac mode."""
-        if hvac_mode == self._hvac_mode[1]:
-            await self.coordinator.set_device_command(self._device_id, 1)
-        elif hvac_mode == self._hvac_mode[0]:
-            await self.coordinator.set_device_command(self._device_id, 0)
+        if hvac_mode == self._hvac_modes[1]:
+            await self.coordinator.set_device_command(self.unique_id, 1)
+        elif hvac_mode == HVACMode.OFF:
+            await self.coordinator.set_device_command(self.unique_id, 0)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new target preset mode."""
         if preset_mode == PRESET_AWAY:
-            await self.coordinator.set_device_command(self._device_id, 1)
-            await self.coordinator.set_device_command(self._device_id, 1, "mode")
+            await self.coordinator.set_device_command(self.unique_id, 1)
+            await self.coordinator.set_device_command(self.unique_id, 1, "mode")
         elif preset_mode == PRESET_NONE:
-            await self.coordinator.set_device_command(self._device_id, 0, "mode")
+            await self.coordinator.set_device_command(self.unique_id, 0, "mode")
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
-        await self.coordinator.set_device_command(self._device_id, 1)
+        await self.coordinator.set_device_command(self.unique_id, 1)
         await self.coordinator.set_device_command(
-            self._device_id, kwargs.get(ATTR_TEMPERATURE, 20), "settemp"
+            self.unique_id, kwargs.get(ATTR_TEMPERATURE, 20), "settemp"
         )

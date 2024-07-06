@@ -73,10 +73,10 @@ class KocomHomeAPI:
     def set_user_credentials(self, data: dict):
         if len(data.keys()) == 3:
             self.user_credentials["password"] = data["pwd"]
-            self.user_credentials["user_id"] = f"00000{str(data["zone"])}00{str(data["id"])}"
+            self.user_credentials["user_id"] = f"00000{str(data['zone'])}00{str(data['id'])}"
         else:
             pairing_info = data["list"][0] 
-            pairing_zone, pairing_id = pairing_info["zone"], pairing_info["id"]
+            pairing_zone, pairing_id = pairing_info["zone"], pairing_info['id']
 
             self.user_credentials["pairing_info"] = pairing_info
             self.user_credentials["zone_id"] = f"00{pairing_zone}0{pairing_id}"
@@ -136,7 +136,7 @@ class KocomHomeAPI:
             "Authorization": generate_digest_header(
                 self.user_credentials["user_id"],
                 self.user_credentials["password"],
-                f"/api/{self.user_credentials["zone_id"]}{path}{year_month}",
+                f"/api/{self.user_credentials['zone_id']}{path}{year_month}",
                 self.apartment_tokens["nonce"]
             ),
             "Cookie": self.apartment_tokens["cookie"],
@@ -188,14 +188,14 @@ class KocomHomeAPI:
     
     async def request_pairlist_login(self) -> dict | bool:
         """Finds the paired device based on the phone number."""
-        url = f"{self.API_SERVER_URL}/api/{self.user_credentials["user_id"]}/pairlist"
+        url = f"{self.API_SERVER_URL}/api/{self.user_credentials['user_id']}/pairlist"
         session = async_get_clientsession(self.hass)
 
         headers = {
             "Authorization": generate_digest_header(
                 self.user_credentials["user_id"],
                 self.user_credentials["password"],
-                f"/api/{self.user_credentials["user_id"]}/pairlist",
+                f"/api/{self.user_credentials['user_id']}/pairlist",
                 self.kbranch_tokens["nonce"]
             ),
             "Cookie": self.kbranch_tokens["cookie"],
@@ -223,14 +223,14 @@ class KocomHomeAPI:
 
     async def request_pairnum_login(self, wallpad_number: str) -> dict | bool:
         """If there is no paired device, try pairing through authentication number"""
-        url = f"http://kbranch.kocom.co.kr/api/{self.user_credentials["user_id"]}/pairnum"
+        url = f"http://kbranch.kocom.co.kr/api/{self.user_credentials['user_id']}/pairnum"
         session = async_get_clientsession(self.hass)
 
         headers = {
             "Authorization": generate_digest_header(
                 self.user_credentials["user_id"],
                 self.user_credentials["password"],
-                f"/api/{self.user_credentials["user_id"]}/pairnum",
+                f"/api/{self.user_credentials['user_id']}/pairnum",
                 self.kbranch_tokens["nonce"]
             ),
             "Cookie": self.kbranch_tokens["cookie"],
@@ -252,7 +252,7 @@ class KocomHomeAPI:
             )            
             return False
         
-    def is_device_state(self, device: str, id: str, function: str) -> bool | int:
+    def current_device_state(self, device: str, id: str, function: str) -> bool | int:
         """Derive status information from the list of lights, outlets, thermostats, and air conditioners."""
         try:            
             device_data = self.device_settings.get(device, {}).get("data", {}).get("entry", [])
@@ -279,7 +279,7 @@ class KocomHomeAPI:
             "Authorization": generate_digest_header(
                 self.user_credentials["user_id"],
                 self.user_credentials["password"],
-                f"/api/{self.user_credentials["zone_id"]}{path}",
+                f"/api/{self.user_credentials['zone_id']}{path}",
                 self.apartment_tokens["nonce"]
             ),
             "Cookie": self.apartment_tokens["cookie"],
@@ -312,7 +312,7 @@ class KocomHomeAPI:
             "Authorization": generate_digest_header(
                 self.user_credentials["user_id"],
                 self.user_credentials["password"], 
-                f"/api/{self.user_credentials["zone_id"]}{path}",
+                f"/api/{self.user_credentials['zone_id']}{path}",
                 self.apartment_tokens["nonce"]
             ),
             "Cookie": self.apartment_tokens["cookie"],

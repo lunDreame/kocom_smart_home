@@ -53,7 +53,7 @@ class KocomSwitch(KocomEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         """Return true if fan is on."""
-        status = self.coordinator.get_device_status(self._device_id)
+        status = self.coordinator.get_device_status(self.unique_id)
         return status
 
     @property
@@ -68,8 +68,8 @@ class KocomSwitch(KocomEntity, SwitchEntity):
     
     async def async_turn_on(self, **kwargs):
         """Turn on switch."""
-        await self.coordinator.set_device_command(self._device_id, 1)
+        await self.coordinator.set_device_command(self.unique_id, 1)
         
     async def async_turn_off(self, **kwargs):
         """Turn off switch."""
-        await self.coordinator.set_device_command(self._device_id, 0)
+        await self.coordinator.set_device_command(self.unique_id, 0)
