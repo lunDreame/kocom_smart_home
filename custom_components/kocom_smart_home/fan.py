@@ -24,7 +24,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     devices = await coordinator.get_devices()
 
     entities_to_add: list = [
-        KocomFan(coordinator, devices[0])
+        KocomFan(coordinator, device)
+        for device in devices
+        if device["device_id"] not in hass.data[DOMAIN]
     ]
     
     if entities_to_add:
@@ -63,6 +65,8 @@ class KocomFan(KocomEntity, FanEntity):
     def percentage(self) -> Optional[int]:
         """Return the current speed percentage."""
         status = self.coordinator.get_device_status(function="wind")
+        if status == "0":
+            return 0
         return ordered_list_item_to_percentage(SPEED_LIST, status)
     
     @property

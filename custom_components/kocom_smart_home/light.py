@@ -17,7 +17,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     for coordinator in coordinators:
         devices = await coordinator.get_devices()
         entities_to_add.extend(
-            KocomLight(coordinator, device) for device in devices
+            KocomLight(coordinator, device)
+            for device in devices
+            if device["device_id"] not in hass.data[DOMAIN]
         )
     
     if entities_to_add:

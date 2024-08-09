@@ -185,7 +185,7 @@ class KocomCoordinator(DataUpdateCoordinator):
         elif self.name in ["gas", "vent", "totalcontrol"]:
             single_device = await self.get_single_device()
             entry_device_info = {
-                "device_id": f"{self.name}_{single_device['data']['attr']['id'].lower()}",
+                "device_id": f"{single_device['data']['attr']['id'].lower()}_00",
                 "device_name": {"gas": "가스", "vent": "환기", "totalcontrol": "일괄소등"}[self.name],
                 "device_room": "00",
                 "device_type": single_device["data"]["attr"]["type"],
