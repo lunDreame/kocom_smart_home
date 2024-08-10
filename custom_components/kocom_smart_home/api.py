@@ -58,11 +58,11 @@ class KocomHomeAPI:
             "aircon": {}
         }
 
-    async def set_entry_and_initialize_devices(self, entry):
-        """Set entry data and initialize device states if necessary."""
+    async def initialize_devices(self, entry: Any):
+        """Initialize the device and user credentials."""
         self.entry = entry
         self.user_credentials = self.entry.data.get("pairing_data", {})
-        if all(not value for value in self.device_settings.values()):
+        if not any(self.device_settings.values()):
             await asyncio.gather(
                 self.update_device_state("light"),
                 self.update_device_state("concent"),
@@ -71,6 +71,7 @@ class KocomHomeAPI:
             )
 
     def set_user_credentials(self, data: dict):
+        """Set user credentials."""
         if len(data.keys()) == 3:
             self.user_credentials["password"] = data["pwd"]
             self.user_credentials["user_id"] = f"00000{str(data['zone'])}00{str(data['id'])}"

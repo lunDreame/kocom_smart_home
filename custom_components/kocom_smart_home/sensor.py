@@ -18,7 +18,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         entities_to_add.extend(
             KocomSensor(coordinator, device)
             for device in devices
-            if device["device_id"] not in hass.data[DOMAIN]
         )
     
     if entities_to_add:
@@ -77,6 +76,7 @@ class KocomSensor(KocomEntity, SensorEntity):
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
         return {
+            "Unique ID": self._device["device_id"],
             "Device room": self._device["device_room"],
             "Device type": self._device["device_type"],
             "Registration Date": self._device["reg_date"],

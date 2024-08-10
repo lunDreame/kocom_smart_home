@@ -26,7 +26,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities_to_add: list = [
         KocomFan(coordinator, device)
         for device in devices
-        if device["device_id"] not in hass.data[DOMAIN]
     ]
     
     if entities_to_add:
@@ -38,6 +37,10 @@ class KocomFan(KocomEntity, FanEntity):
         self._device = device
         self._device_id = device["device_id"]
         self._device_name = device["device_name"]
+
+        self._supported_features = FanEntityFeature.SET_SPEED
+        self._supported_features |= FanEntityFeature.TURN_ON
+        self._supported_features |= FanEntityFeature.TURN_OFF
         super().__init__(coordinator)
 
     @property
@@ -59,7 +62,7 @@ class KocomFan(KocomEntity, FanEntity):
     @property
     def supported_features(self) -> int: 
         """Flag supported features."""
-        return FanEntityFeature.SET_SPEED
+        return self._supported_features
     
     @property
     def percentage(self) -> Optional[int]:
@@ -89,6 +92,7 @@ class KocomFan(KocomEntity, FanEntity):
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
         return {
+            "Unique ID": self._device["device_id"],
             "Device room": self._device["device_room"],
             "Device type": self._device["device_type"],
             "Registration Date": self._device["reg_date"],
