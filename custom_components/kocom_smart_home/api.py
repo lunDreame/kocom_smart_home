@@ -1,17 +1,18 @@
 import re
+import json
 import asyncio
-import datetime
-from typing import Any
+import aiohttp
 from datetime import datetime
+from typing import Any
 
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.config_entries import ConfigEntry
 
-from .const import LOGGER, TIMEOUT_SEC
+from .const import LOGGER, REQUEST_TIMEOUT
 from .utils import generate_digest_header, generate_fcm_token
 
 
 def parse_device_info(data: dict, key: str) -> bool | str | None:
-    """Parse gas and vent device information."""
+    """Parse device gas/vent info from data"""
     try:
         if key == "attr":
             return {
@@ -29,25 +30,26 @@ def parse_device_info(data: dict, key: str) -> bool | str | None:
                     return entry.get("value")
                 
         return None
-    except Exception:
+    except Exception as ex:
+        LOGGER.error("Failed to parse device info - Key: %s, Error: %s", key, str(ex))
         return None
 
 
-class KocomHomeAPI:
-    """KOCOM API"""
+class KocomSmartHomeAPI:
+    """KOCOM Samrt Home API client"""
 
-    """Base API URL"""
+    """API endpoints"""
     API_SERVER_URL = "http://kbranch.kocom.co.kr"
     API_TYPE_URL = "http://{}/api/{}"
 
-    """Net State Until"""
+    """Authentication constants"""
     ANDROID_MEMBERSHIP = "4990e9e16a532aa9010403b01e0ee52a"
     DIGEST_IKOD = "Android!1000001"
 
-    def __init__(self, hass) -> None:
-        """Initialize."""
-        self.hass = hass
+    def __init__(self) -> None:
+        """Initialize API client"""
         self.entry = None
+        self.session = aiohttp.ClientSession()
         self.kbranch_tokens: dict[str, str] = {}
         self.apartment_tokens: dict[str, str] = {}
         self.user_credentials: dict[str, Any] = {}
@@ -58,10 +60,12 @@ class KocomHomeAPI:
             "aircon": {}
         }
 
-    async def initialize_devices(self, entry: Any):
-        """Initialize the device and user credentials."""
+    async def initialize_devices(self, entry: ConfigEntry):
+        """Initialize devices and credentials"""
         self.entry = entry
         self.user_credentials = self.entry.data.get("pairing_data", {})
+        #self.session = aiohttp.ClientSession()
+        
         if not any(self.device_settings.values()):
             await asyncio.gather(
                 self.update_device_state("light"),
@@ -70,20 +74,28 @@ class KocomHomeAPI:
                 self.update_device_state("aircon")
             )
 
-    def set_user_credentials(self, data: dict):
-        """Set user credentials."""
-        if len(data.keys()) == 3:
-            self.user_credentials["password"] = data["pwd"]
-            self.user_credentials["user_id"] = f"00000{str(data['zone'])}00{str(data['id'])}"
-        else:
-            pairing_info = data["list"][0] 
-            pairing_zone, pairing_id = pairing_info["zone"], pairing_info['id']
+    async def close(self):
+        """Close API session"""
+        if self.session:
+            await self.session.close()
 
-            self.user_credentials["pairing_info"] = pairing_info
-            self.user_credentials["zone_id"] = f"00{pairing_zone}0{pairing_id}"
+    def set_user_credentials(self, data: dict):
+        """Set user auth credentials"""
+        try:
+            if len(data.keys()) == 3:
+                self.user_credentials["password"] = data["pwd"]
+                self.user_credentials["user_id"] = f"00000{str(data['zone'])}00{str(data['id'])}"
+            else:
+                pairing_info = data["list"][0]
+                pairing_zone, pairing_id = pairing_info["zone"], pairing_info["id"]
+
+                self.user_credentials["pairing_info"] = pairing_info
+                self.user_credentials["zone_id"] = f"00{pairing_zone}0{pairing_id}"
+        except Exception as ex:
+            LOGGER.error(f"Failed to set user credentials: {ex}")
 
     async def update_device_state(self, device: str) -> dict[str, Any]:
-        """Check and update the state of a device."""
+        """Update device state data"""
         status = await self.check_device_status(device)
         self.device_settings[device].update({
             "data": self.extract_meaningful_data(status),
@@ -92,44 +104,43 @@ class KocomHomeAPI:
         return self.device_settings[device]
 
     async def fetch_kbranch_token(self):
-        """Gets the authentication token of the kbranch kocom server."""
-        session = async_get_clientsession(self.hass)
+        """Get Kbranch auth token"""
         try: 
-            response = await session.get(f"{self.API_SERVER_URL}/api/sphone")
+            async with self.session.get(f"{self.API_SERVER_URL}/api/sphone") as response:
+                session_id = re.search(r'PHPSESSID=[a-zA-Z0-9]+', response.headers.get("Set-Cookie"))
+                nonce_id = re.search(r'nonce="([^"]+)"', response.headers.get("WWW-Authenticate"))
 
-            session_id = re.search(r'PHPSESSID=[a-zA-Z0-9]+', response.headers.get("Set-Cookie", ""))
-            nonce_id = re.search(r'nonce="([^"]+)"', response.headers.get("WWW-Authenticate", ""))
-            self.kbranch_tokens = {"cookie": session_id.group(), "nonce": nonce_id.group(1)}
+                if session_id and nonce_id:
+                    self.kbranch_tokens = {"cookie": session_id.group(), "nonce": nonce_id.group(1)}
+                else:
+                    raise ValueError("Failed to extract Kbranch session or nonce.")
         except Exception as ex:
-            LOGGER.error("Request failed to get FCM authentication token from Kocom server, %s", ex)
+            LOGGER.error("Failed to fetch Kbranch authentication token: %s", str(ex))
     
     async def fetch_apartment_server_token(self):
-        """Gets the authentication token of the apartment server."""
+        """Get apartment server auth token"""
         server_ip = self.user_credentials["pairing_info"]["svrip"]
         zone_id = self.user_credentials["zone_id"]
-
         url = self.API_TYPE_URL.format(server_ip, zone_id)
 
-        session = async_get_clientsession(self.hass)
         try: 
-            response = await session.get(url)
+            async with self.session.get(url) as response:
+                session_id = re.search(r'PHPSESSID=[a-zA-Z0-9]+', response.headers.get("Set-Cookie"))
+                nonce_id = re.search(r'nonce="([^"]+)"', response.headers.get("WWW-Authenticate"))
 
-            session_id = re.search(r'PHPSESSID=[a-zA-Z0-9]+', response.headers.get("Set-Cookie", ""))
-            nonce_id = re.search(r'nonce="([^"]+)"', response.headers.get("WWW-Authenticate", ""))
-            self.apartment_tokens = {"cookie": session_id.group(), "nonce": nonce_id.group(1)}
+                if session_id and nonce_id:
+                    self.apartment_tokens = {"cookie": session_id.group(), "nonce": nonce_id.group(1)}
+                else:
+                    raise ValueError("Failed to extract apartment server session or nonce.")
         except Exception as ex:
-            LOGGER.error("Request failed while retrieving authentication token for apartment server, %s", ex)
+            LOGGER.error("Failed to fetch apartment server authentication token: %s", str(ex))
 
     async def fetch_energy_stdcheck(self, path: str = "/energy/stdcheck/") -> dict:
-        """Obtain energy usage information from the apartment server."""
+        """Get energy usage data"""
         server_ip = self.user_credentials["pairing_info"]["svrip"]
         zone_id = self.user_credentials["zone_id"]
-
-        now = datetime.now()
-        year_month = now.strftime("%Y-%m").replace("-", "")
-
+        year_month = datetime.now().strftime("%Y%m")
         url = self.API_TYPE_URL.format(server_ip, zone_id)
-        session = async_get_clientsession(self.hass)         
 
         await self.fetch_apartment_server_token()
 
@@ -142,23 +153,22 @@ class KocomHomeAPI:
             ),
             "Cookie": self.apartment_tokens["cookie"],
         }
+
         try: 
-            response = await session.get(url+path+year_month, headers=headers)
-            json_data = await response.json(content_type="text/html")
-            LOGGER.debug("Fetch energy stdcheck: %s", json_data)
-            
-            return json_data
-        except Exception:
-            LOGGER.error("Request failed while retrieving energy usage from apartment complex server")
+            async with self.session.get(url+path+year_month, headers=headers) as response:
+                json_data = await response.json(content_type="text/html")
+                LOGGER.debug("Energy usage data fetched: %s", json_data)
+                return json_data
+        except Exception as ex:
+            LOGGER.error("Failed to fetch energy usage data: %s", str(ex))
 
     async def request_sphone_login(self, phone_number: str) -> bool:
-        """First sphone login for wallpad authentication"""
+        """Login with phone number"""
         url = f"{self.API_SERVER_URL}/api/sphone"
-        session = async_get_clientsession(self.hass)
 
         if not self.kbranch_tokens:
             await self.fetch_kbranch_token()
-            LOGGER.debug("Request sphone login  KBRANCH_TOKENS: %s", self.kbranch_tokens)
+            LOGGER.debug("Kbranch tokens initialized: %s", self.kbranch_tokens)
 
         headers = {
             "Authorization": generate_digest_header(
@@ -167,30 +177,28 @@ class KocomHomeAPI:
                 "/api/sphone",
                 self.kbranch_tokens["nonce"]
             ),
+            "User-Agent": "SmartHome/1.0.1 (com.kocom.SmartHome2; build:46; iOS 18.1.0) Alamofire/5.6.2",
             "Cookie": self.kbranch_tokens["cookie"],
         }
         data = {
             "phonenum": phone_number,
             "type": self.DIGEST_IKOD,
-            "token": generate_fcm_token(phone_number)
+            "token": generate_fcm_token()
         }
 
         try: 
-            response = await session.get(url, headers=headers, json=data, timeout=TIMEOUT_SEC)
-            json_data = await response.json(content_type="text/html")
-
-            self.set_user_credentials(json_data)
-            LOGGER.debug("Request sphone login: %s", json_data)
-
-            return await self.request_pairlist_login()    
-        except Exception:
-            LOGGER.error("Request failed while attempting a login request to the Kocom server, Path: '/api/sphone'")
+            async with self.session.get(url, headers=headers, json=data, timeout=REQUEST_TIMEOUT) as response:
+                json_data = await response.json(content_type="text/html")
+                self.set_user_credentials(json_data)
+                LOGGER.debug("Sphone login successful: %s", json_data)
+                return await self.request_pairlist_login()    
+        except Exception as ex:
+            LOGGER.error("Sphone login failed: %s", str(ex))
             return False
     
     async def request_pairlist_login(self) -> dict | bool:
-        """Finds the paired device based on the phone number."""
+        """Get paired device list"""
         url = f"{self.API_SERVER_URL}/api/{self.user_credentials['user_id']}/pairlist"
-        session = async_get_clientsession(self.hass)
 
         headers = {
             "Authorization": generate_digest_header(
@@ -199,33 +207,30 @@ class KocomHomeAPI:
                 f"/api/{self.user_credentials['user_id']}/pairlist",
                 self.kbranch_tokens["nonce"]
             ),
+            "User-Agent": "SmartHome/1.0.1 (com.kocom.SmartHome2; build:46; iOS 18.1.0) Alamofire/5.6.2",
             "Cookie": self.kbranch_tokens["cookie"],
         }
 
         try: 
-            response = await session.get(url, headers=headers, timeout=TIMEOUT_SEC)
-            json_data = await response.json(content_type="text/html")
-            LOGGER.debug("Request pairlist login: %s", json_data)
-            
-            if len(json_data.get("list", 0)) == 1:        
-                self.set_user_credentials(json_data)    
-                LOGGER.info("Pairing Information Found: %s", self.user_credentials["pairing_info"])
-                return self.user_credentials
-            else:
-                LOGGER.info("Pairing information not found.")
-                return {}
+            async with self.session.get(url, headers=headers, timeout=REQUEST_TIMEOUT) as response:
+                json_data = await response.json(content_type="text/html")
+                LOGGER.debug("Pairlist login response: %s", json_data)
                 
-        except Exception:
-            LOGGER.error(
-                "Request failed while attempting a login request to the Kocom server, Path: '/api/%s/pairlist'", 
-                {self.user_credentials["user_id"]}
-            )            
+                if len(json_data.get("list", [])) == 1:        
+                    self.set_user_credentials(json_data)    
+                    LOGGER.info("Device pairing found: %s", self.user_credentials["pairing_info"])
+                    return self.user_credentials
+                else:
+                    LOGGER.info("No paired devices found")
+                    return {}
+                    
+        except Exception as ex:
+            LOGGER.error("Failed to fetch pair list: %s", str(ex))
             return False
 
     async def request_pairnum_login(self, wallpad_number: str) -> dict | bool:
-        """If there is no paired device, try pairing through authentication number"""
+        """Login with wallpad number"""
         url = f"http://kbranch.kocom.co.kr/api/{self.user_credentials['user_id']}/pairnum"
-        session = async_get_clientsession(self.hass)
 
         headers = {
             "Authorization": generate_digest_header(
@@ -234,6 +239,7 @@ class KocomHomeAPI:
                 f"/api/{self.user_credentials['user_id']}/pairnum",
                 self.kbranch_tokens["nonce"]
             ),
+            "User-Agent": "SmartHome/1.0.1 (com.kocom.SmartHome2; build:46; iOS 18.1.0) Alamofire/5.6.2",
             "Cookie": self.kbranch_tokens["cookie"],
         }
         data = {
@@ -241,20 +247,16 @@ class KocomHomeAPI:
         }
 
         try: 
-            response = await session.get(url, headers=headers, json=data, timeout=TIMEOUT_SEC)
-            json_data = await response.json(content_type="text/html")
-            LOGGER.debug("Request pairnum login: %s", json_data)
-
-            return json_data
-        except Exception:
-            LOGGER.error(
-                "Request failed while attempting a login request to the Kocom server, Path: '/api/%s/pairnum'", 
-                {self.user_credentials["user_id"]}
-            )            
+            async with self.session.get(url, headers=headers, json=data, timeout=REQUEST_TIMEOUT) as response:
+                json_data = await response.json(content_type="text/html")
+                LOGGER.debug("Pairnum login successful: %s", json_data)
+                return json_data
+        except Exception as ex:
+            LOGGER.error("Pairnum login failed: %s", str(ex))
             return False
         
     def current_device_state(self, device: str, id: str, function: str) -> bool | int:
-        """Derive status information from the list of lights, outlets, thermostats, and air conditioners."""
+        """Get current device state"""
         try:            
             device_data = self.device_settings.get(device, {}).get("data", {}).get("entry", [])
             for device_entry in device_data:
@@ -263,16 +265,14 @@ class KocomHomeAPI:
                         if entry_list.get("function") == function:
                             return int(entry_list.get("value", 0))
         except Exception as ex:
-            LOGGER.error("There was a problem in deriving the value of the '%s' list. %s", device, ex)
+            LOGGER.error("Failed to get %s state - ID: %s, Function: %s, Error: %s", device, id, function, str(ex))
             return 0  
 
     async def check_device_status(self, device: str, path: str = "/control/allstatus") -> dict:
-        """Check the status of the device"s entire item"""
+        """Check device status"""
         server_ip = self.user_credentials["pairing_info"]["svrip"]
         zone_id = self.user_credentials["zone_id"]
-
         url = self.API_TYPE_URL.format(server_ip, zone_id)
-        session = async_get_clientsession(self.hass)         
 
         await self.fetch_apartment_server_token()
 
@@ -283,6 +283,7 @@ class KocomHomeAPI:
                 f"/api/{self.user_credentials['zone_id']}{path}",
                 self.apartment_tokens["nonce"]
             ),
+            "User-Agent": "SmartHome/1.0.1 (com.kocom.SmartHome2; build:46; iOS 18.1.0) Alamofire/5.6.2",
             "Cookie": self.apartment_tokens["cookie"],
         }
         data = {
@@ -291,21 +292,22 @@ class KocomHomeAPI:
         }
 
         try:
-            response = await session.get(url+path, headers=headers, json=data, timeout=TIMEOUT_SEC)
-            json_data = await response.json(content_type="text/html")
-            LOGGER.debug("Check device status: %s", json_data)
-            
-            return json_data
-        except Exception:
-            LOGGER.error("Device '%s' status request to apartment server failed, Path: '/control/allstatus'", device)
+            async with self.session.get(url+path, headers=headers, json=data, timeout=REQUEST_TIMEOUT) as response:
+                json_data = await response.json(content_type="text/html")
+                LOGGER.debug("%s status fetched: %s", device, json_data)
+                return json_data
+        except Exception as ex:
+            LOGGER.error("Failed to fetch %s status: %s", device, str(ex))
 
     async def send_control_request(self, type: str, id: str, function: str, value: str, path: str = "/control") -> dict:
-        """Device Control Request"""
+        """Send device control command"""
+        LOGGER.info(
+            "Sending device control - Type: %s, ID: %s, Function: %s, Value: %s",
+            type, id, function, value
+        )
         server_ip = self.user_credentials["pairing_info"]["svrip"]
         zone_id = self.user_credentials["zone_id"]
-
         url = self.API_TYPE_URL.format(server_ip, zone_id)
-        session = async_get_clientsession(self.hass)                                     
 
         await self.fetch_apartment_server_token()
 
@@ -316,6 +318,7 @@ class KocomHomeAPI:
                 f"/api/{self.user_credentials['zone_id']}{path}",
                 self.apartment_tokens["nonce"]
             ),
+            "User-Agent": "SmartHome/1.0.1 (com.kocom.SmartHome2; build:46; iOS 18.1.0) Alamofire/5.6.2",
             "Cookie": self.apartment_tokens["cookie"],
         }
         data = {
@@ -327,53 +330,53 @@ class KocomHomeAPI:
         }
 
         try:
-            LOGGER.info(
-                "Prepare a device command request to the apartment server. %s, %s, %s, %s",
-                type, id, function, value
-            )
-            response = await session.get(url+path, headers=headers, json=data, timeout=TIMEOUT_SEC)
-
-            json_data = await response.json(content_type="text/html")
-            LOGGER.debug("send_control_request  %s", json_data)
-
-            return json_data
-        except Exception:
-            LOGGER.error("Device '%s' command request to apartment server failed, Path: '/control'", type)
+            async with self.session.get(url+path, headers=headers, json=data, timeout=REQUEST_TIMEOUT) as response:
+                json_data = await response.json(content_type="text/html")
+                LOGGER.debug("Control request successful: %s", json_data)
+                return json_data
+        except Exception as ex:
+            LOGGER.error("Control request failed - Type: %s, Error: %s", type, str(ex))
 
     def extract_meaningful_data(self, response: dict) -> dict:
-        """Remove meaningless data from lights/concents"""
+        """Filter and clean device data"""
         try:
-            max_room_cnt = self.entry.data.get("max_room_cnt")
-            max_switch_cnt = self.entry.data.get("max_switch_cnt")
+            room_count = self.entry.data.get("room_count")
+            switch_count = self.entry.data.get("switch_count")
         
             entry_list = response.get("entry", [])
-            response["entry"] = [entry for entry in entry_list if int(entry.get("id", "")[2:]) <= max_room_cnt]
+            response["entry"] = [
+                entry for entry in entry_list
+                if int(entry.get("id", "")[2:]) <= room_count
+            ]
         
             if response.get("type") in ["light", "concent"]:
                 for entry in entry_list:
-                    entry["list"] = [item for item in entry.get("list", []) if int(item.get("function", "")[3:]) <= max_switch_cnt]
+                    entry["list"] = [
+                        item for item in entry.get("list", [])
+                        if int(item.get("function", "")[3:]) <= switch_count
+                    ]
         
             return response
         except Exception as ex:
-            LOGGER.error("There was an error parsing the status type or there was a problem removing the element. %s", ex)
+            LOGGER.error("Failed to filter device data: %s", str(ex))
             return {}
 
     def update_device_data(self, control_response: dict):
-        """Update device data"""
+        """Updates device entry list data from control response."""
         try:
             device_type = control_response.get("type")
-            entry_list = control_response.get("entry", [])
-        
-            if device_type and entry_list:
-                device_settings = self.device_settings.get(device_type, {})
-                device_data_to_modify = device_settings.get("data", {})
-                device_entries = device_data_to_modify.get("entry", [])
+            entries = control_response.get("entry", [])
             
-                for device_entry in device_entries:
-                    entry_id = device_entry.get("id")
-                    if entry_id == entry_list[0].get("id"):
-                        device_entry["list"] = entry_list[0].get("list", [])[:len(device_entry.get("list", []))]
-                        LOGGER.info("%s device data update successful.", device_type.title())
-                        break
+            if not (device_type and entries):
+                LOGGER.error(f"Device {device_type}: Missing required data in control response")
+            
+            device_entries = self.device_settings.get(device_type, {}).get("data", {}).get("entry", [])
+            target_entry = next((e for e in device_entries if e.get("id") == entries[0].get("id")), None)
+
+            if target_entry:
+                target_entry["list"] = entries[0].get("list", [])[:len(target_entry.get("list", []))]
+                #LOGGER.info(f"Device {device_type}: Successfully updated entry {entries[0].get('id')}")
+            else:
+                LOGGER.error(f"Device {device_type}: Entry {entries[0].get('id')} not found")
         except Exception as ex:
-            LOGGER.error("Failed to update the device settings: %s", ex)
+            LOGGER.error(f"Device {device_type}: Update failed - {str(ex)}")

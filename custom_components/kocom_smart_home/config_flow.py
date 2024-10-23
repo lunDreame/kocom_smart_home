@@ -1,13 +1,10 @@
-"""Adds config flow for Kocom Smart Home"""
+"""Adds config flow for kocom_smart_home"""
 import re
-import asyncio
 import voluptuous as vol
 from typing import Any
-from functools import partial
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.core import callback
-from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.config_entries import (
     ConfigEntry,
@@ -15,7 +12,7 @@ from homeassistant.config_entries import (
     OptionsFlow,
 )
 
-from .api import KocomHomeAPI
+from .api import KocomSmartHomeAPI
 from .const import DOMAIN, LOGGER
 
 def int_between(min_int, max_int):
@@ -23,42 +20,42 @@ def int_between(min_int, max_int):
     return vol.All(vol.Coerce(int), vol.Range(min=min_int, max=max_int))
 
 
-class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
+class KocomSmartHomeConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow."""
 
     VERSION = 1
 
-    api: KocomHomeAPI = None
-    data: dict[str, Any]
+    _api: KocomSmartHomeAPI
+    _data: dict[str, Any] = {}
 
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
         """Get the options flow for this handler."""
-        return KocomOptionsFlowHandler(config_entry)
+        return KocomSmartHomeOptionsFlowHandler(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
+    ) -> FlowResult:
         """Handle a flow initiated by the user."""
         errors = {}
         already_sphone = False
 
         if user_input is not None:
-            self.data = user_input
+            self._data.update(user_input)
 
-            if not re.match(r"^010\d{8}$", self.data["phone_number"]):
+            if not re.match(r"^010\d{8}$", user_input["phone_number"]):
                 errors["base"] = "invalid_phone_number"
             else:
-                self.api = KocomHomeAPI(self.hass)
-                sphone_login = await self.api.request_sphone_login(
-                    self.data["phone_number"]
+                self._api = KocomSmartHomeAPI()
+                sphone_login = await self._api.request_sphone_login(
+                    user_input["phone_number"]
                 )
 
                 if isinstance(sphone_login, bool) and not sphone_login:
                     errors["base"] = "network_error"
                 elif sphone_login:
-                    self.data["pairing_data"] = sphone_login
+                    self._data["pairing_data"] = sphone_login
                     already_sphone = True
 
             if not (errors or already_sphone):
@@ -73,25 +70,25 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
     
     async def async_step_wallpad(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
+    ) -> FlowResult:
         """Request information entered through the user to the wallpad."""
         errors = {}
 
         if user_input is not None:
-            self.data = user_input
+            #self._data.update(user_input)
 
-            if not re.match(r"^\d{8}$", self.data["wallpad_number"]):
+            if not re.match(r"^\d{8}$", user_input["wallpad_number"]):
                 errors["base"] = "invalid_auth_number"
             else:
-                pairnum_login = await self.api.request_pairnum_login(
-                    self.data["wallpad_number"]
+                pairnum_login = await self._api.request_pairnum_login(
+                    user_input["wallpad_number"]
                 )
                 if pairnum_login.get("error-msg") == "PairNum Fail":
                     errors["base"] = "wallpad_auth_failure"
             
             if not errors:
-                pairlist_login = await self.api.request_pairlist_login()
-                self.data["pairing_data"] = pairlist_login
+                pairlist_login = await self._api.request_pairlist_login()
+                self._data["pairing_data"] = pairlist_login
 
                 if isinstance(pairlist_login, bool) and not pairlist_login:
                     return self.async_abort(reason="registration_failed")
@@ -105,17 +102,19 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_options(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
+    ) -> FlowResult:
         """Defines the Kocom options."""
         if user_input is not None:
+            self._data.update(user_input)
+
             return self.async_create_entry(
-                title=self.data["phone_number"], data={**self.data, **user_input}
+                title=self._data["phone_number"], data=self._data
             )
 
         data_schema = vol.Schema(
             {
-                vol.Required("max_room_cnt", default=4): int_between(1, 6),
-                vol.Required("max_switch_cnt", default=2): int_between(1, 8),
+                vol.Required("room_count", default=4): int_between(1, 6),
+                vol.Required("switch_count", default=2): int_between(1, 8),
                 vol.Required("light_interval", default=120): cv.positive_int,
                 vol.Required("concent_interval", default=300): cv.positive_int,
                 vol.Required("heat_interval", default=300): cv.positive_int,
@@ -132,7 +131,7 @@ class KocomConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
 
-class KocomOptionsFlowHandler(OptionsFlow):
+class KocomSmartHomeOptionsFlowHandler(OptionsFlow):
     """Handle a option flow."""
 
     def __init__(self, config_entry: ConfigEntry) -> None:

@@ -1,5 +1,5 @@
 {
-    "title": "Kocom Smart Home",
+    "title": "KOCOM Smart Home",
     "config": {
         "step": {
             "user": {
@@ -18,19 +18,19 @@
             },
             "options": {
                 "data": {
-                    "max_room_cnt": "Maximum number of rooms",
-                    "max_switch_cnt": "Maximum number of switches",
+                    "room_count": "Number of rooms",
+                    "switch_count": "Number of switches",
                     "light_interval": "Light scan interval (seconds)",
-                    "concent_interval": "Outlet scan interval (seconds)",
-                    "heat_interval": "Heating scan interval (seconds)",
-                    "aircon_interval": "Air conditioner scan interval (seconds)",
+                    "concent_interval": "Concent scan interval (seconds)",
+                    "heat_interval": "Heat scan interval (seconds)",
+                    "aircon_interval": "Aircon scan interval (seconds)",
                     "gas_interval": "Gas scan interval (seconds)",
-                    "vent_interval": "Ventilation scan interval (seconds)",
+                    "vent_interval": "Vent scan interval (seconds)",
                     "energy_interval": "Energy scan interval (seconds)",
-                    "totalcontrol_interval": "Batch control scan interval (seconds)"
+                    "totalcontrol_interval": "Total control scan interval (seconds)"
                 },
-                "description": "You can adjust the scan interval for each device, in seconds.\n If the scan interval is too low, the server may be over-requested, so set it appropriately.\n You can set the maximum number of rooms and switches for the device.",
-                "title": "Adjusting Kocom Options"
+                "description": "You can adjust the scan interval for each device, in seconds.\n If the scan interval is too low, the server may be over-requested, so set it appropriately.\n You can set the number of rooms and switches for the device.",
+                "title": "Adjusting Options"
             }
         },
         "error": {
@@ -52,17 +52,17 @@
         },
         "step": {
             "init": {
-                "title": "Adjusting Kocom Options",
+                "title": "Adjusting Options",
                 "description": "",
                 "data": {
                     "light_interval": "Light scan interval (seconds)",
-                    "concent_interval": "Outlet scan interval (seconds)",
-                    "heat_interval": "Heating scan interval (seconds)",
-                    "aircon_interval": "Air conditioner scan interval (seconds)",
+                    "concent_interval": "Concent scan interval (seconds)",
+                    "heat_interval": "Heat scan interval (seconds)",
+                    "aircon_interval": "Aircon scan interval (seconds)",
                     "gas_interval": "Gas scan interval (seconds)",
-                    "vent_interval": "Ventilation scan interval (seconds)",
+                    "vent_interval": "Vent scan interval (seconds)",
                     "energy_interval": "Energy scan interval (seconds)",
-                    "totalcontrol_interval": "Batch control scan interval (seconds)"
+                    "totalcontrol_interval": "Total control scan interval (seconds)"
                 }
             }
         }

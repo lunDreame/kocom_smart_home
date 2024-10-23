@@ -3,8 +3,8 @@ from homeassistant.components.climate.const import PRESET_NONE, PRESET_AWAY
 from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACMode
 
 from .const import DOMAIN, LOGGER
-from .coordinator import KocomCoordinator
-from .device import KocomEntity
+from .coordinator import KocomSmartHomeCoordinator
+from .device import KocomSmartHomeEntity
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -12,14 +12,14 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities_to_add: list = []
 
     coordinators = [
-        KocomCoordinator("heat", api, hass, config_entry),
-        KocomCoordinator("aircon", api, hass, config_entry)
+        KocomSmartHomeCoordinator("heat", api, hass, config_entry),
+        KocomSmartHomeCoordinator("aircon", api, hass, config_entry)
     ]
 
     for coordinator in coordinators:
         devices = await coordinator.get_devices()
         entities_to_add.extend(
-            KocomClimate(coordinator, device)
+            KocomSmartHomeClimate(coordinator, device)
             for device in devices
         )
     
@@ -27,7 +27,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         async_add_entities(entities_to_add)
 
 
-class KocomClimate(KocomEntity, ClimateEntity):
+class KocomSmartHomeClimate(KocomSmartHomeEntity, ClimateEntity):
     
     _enable_turn_on_off_backwards_compatibility = False
     

@@ -1,68 +1,68 @@
 {
-    "title": "\uCF54\uCF64 \uC2A4\uB9C8\uD2B8 \uD648",
+    "title": "코콤 스마트홈",
     "config": {
         "step": {
             "user": {
                 "data": {
-                    "phone_number": "\uD734\uB300\uD3F0 \uBC88\uD638"
+                    "phone_number": "휴대폰 번호"
                 },
-                "description": "\uCF54\uCF64\uC744 \uC2DC\uC791\uD558\uB294 \uB9E8 \uCC98\uC74C \uACFC\uC815\uC785\uB2C8\uB2E4.\n \uD558\uC774\uD508\uC744 \uC81C\uC678\uD55C 11\uC790\uB9AC \uC804\uD654\uBC88\uD638\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694.",
+                "description": "KOCOM 시작 설정을 위한 과정입니다.\n하이픈(-)을 제외한 11자리 휴대폰 번호를 입력해주세요.",
                 "title": ""
             },
             "wallpad": {
                 "data": {
-                    "wallpad_number": "8\uC790\uB9AC"
+                    "wallpad_number": "8자리 숫자"
                 },
-                "description": "\uC6D4\uD328\uB4DC \uB610\uB294 \uBE44\uB514\uC624\uD3F0 \uD654\uBA74\uC5D0 \uD45C\uC2DC\uB41C \uC778\uC99D \uBC88\uD638\uB97C \uC785\uB825\uD558\uC2ED\uC2DC\uC624.\n \uC778\uC99D \uC2DC\uAC04 \uB0B4\uC5D0 \uC785\uB825\uD574 \uC8FC\uC2DC\uAE30 \uBC14\uB78D\uB2C8\uB2E4.",
-                "title": "\uC6D4\uD328\uB4DC \uC778\uC99D"
+                "description": "월패드 또는 비디오폰 화면에 표시된 인증번호를 입력해주세요.\n인증 시간 내에 입력해주시기 바랍니다.",
+                "title": "월패드 인증"
             },
             "options": {
                 "data": {
-                    "max_room_cnt": "\ucd5c\ub300\u0020\ubc29\u0020\uac1c\uc218",
-                    "max_switch_cnt": "\ucd5c\ub300\u0020\uc2a4\uc704\uce58\u0020\uac1c\uc218",
-                    "light_interval": "\uC870\uBA85 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "concent_interval": "\uCF58\uC13C\uD2B8 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "heat_interval": "\uB09C\uBC29 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "aircon_interval": "\uC5D0\uC5B4\uCEE8 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "gas_interval": "\uAC00\uC2A4 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "vent_interval": "\uD658\uAE30 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "energy_interval": "\uC5D0\uB108\uC9C0 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "totalcontrol_interval": "\uC77C\uAD04 \uC81C\uC5B4 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)"
+                    "room_count": "방 개수",
+                    "switch_count": "스위치 개수",
+                    "light_interval": "조명 스캔 간격 (초)",
+                    "concent_interval": "콘센트 스캔 간격 (초)",
+                    "heat_interval": "난방 스캔 간격 (초)",
+                    "aircon_interval": "에어컨 스캔 간격 (초)",
+                    "gas_interval": "가스 스캔 간격 (초)",
+                    "vent_interval": "환기 스캔 간격 (초)",
+                    "energy_interval": "에너지 스캔 간격 (초)",
+                    "totalcontrol_interval": "통합제어 스캔 간격 (초)"
                 },
-                "description": "\uAC01 \uC7A5\uCE58\uC758 \uC2A4\uCE94 \uAC04\uACA9\uC744 \uCD08 \uB2E8\uC704\uB85C \uC870\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.\n \uC2A4\uCE94 \uAC04\uACA9\uC774 \uB108\uBB34 \uB0AE\uC73C\uBA74 \uC11C\uBC84\uC5D0 \uACFC\uC694\uCCAD\uC774 \uBC1C\uC0DD\uD560 \uC218 \uC788\uC73C\uB2C8 \uC801\uC808\uD788 \uC124\uC815\uD558\uC138\uC694.\n \ub514\ubc14\uc774\uc2a4\uc758\u0020\ub300\ud55c\u0020\ucd5c\ub300\u0020\ubc29\u002c\u0020\uc2a4\uc704\uce58\u0020\uac1c\uc218\ub97c\u0020\uc124\uc815\ud560\uc218\u0020\uc788\uc2b5\ub2c8\ub2e4\u002e",
-                "title": "\ucf54\ucf64\u0020\uc635\uc158\u0020\uc870\uc815\u000d"
+                "description": "각 기기의 스캔 간격을 초 단위로 조정할 수 있습니다.\n스캔 간격이 너무 낮으면 서버에 과부하가 걸릴 수 있으니 적절하게 설정해주세요.\n기기의 방 개수와 스위치 개수를 설정할 수 있습니다.",
+                "title": "옵션 조정"
             }
         },
         "error": {
-            "network_error": "\uB124\uD2B8\uC6CC\uD06C \uC5F0\uACB0 \uC2E4\uD328",
-            "invalid_phone_number": "\uC798\uBABB\uB41C \uC804\uD654 \uBC88\uD638",
-            "invalid_auth_number": "\uC798\uBABB\uB41C \uC6D4\uD328\uB4DC \uC778\uC99D \uBC88\uD638",
-            "wallpad_auth_failure": "\uC6D4\uD328\uB4DC \uC778\uC99D \uC2E4\uD328"
+            "network_error": "네트워크 연결 실패",
+            "invalid_phone_number": "잘못된 전화번호",
+            "invalid_auth_number": "잘못된 월패드 인증번호",
+            "wallpad_auth_failure": "월패드 인증 실패"
         },
         "abort": {
-            "registration_failed": "\uC7A5\uCE58 \uB4F1\uB85D \uC2E4\uD328"
+            "registration_failed": "기기 등록 실패"
         }
     },
     "options": {
         "error": {
-            "network_error": "\uB124\uD2B8\uC6CC\uD06C \uC5F0\uACB0 \uC2E4\uD328",
-            "invalid_phone_number": "\uC798\uBABB\uB41C \uC804\uD654 \uBC88\uD638",
-            "invalid_auth_number": "\uC798\uBABB\uB41C \uC6D4\uD328\uB4DC \uC778\uC99D \uBC88\uD638",
-            "wallpad_auth_failure": "\uC6D4\uD328\uB4DC \uC778\uC99D \uC2E4\uD328"
+            "network_error": "네트워크 연결 실패",
+            "invalid_phone_number": "잘못된 전화번호",
+            "invalid_auth_number": "잘못된 월패드 인증번호",
+            "wallpad_auth_failure": "월패드 인증 실패"
         },
         "step": {
             "init": {
-                "title": "\ucf54\ucf64\u0020\uc635\uc158\u0020\uc870\uc815\u000d",
+                "title": "옵션 조정",
                 "description": "",
                 "data": {
-                    "light_interval": "\uC870\uBA85 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "concent_interval": "\uCF58\uC13C\uD2B8 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "heat_interval": "\uB09C\uBC29 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "aircon_interval": "\uC5D0\uC5B4\uCEE8 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "gas_interval": "\uAC00\uC2A4 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "vent_interval": "\uD658\uAE30 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "energy_interval": "\uC5D0\uB108\uC9C0 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)",
-                    "totalcontrol_interval": "\uC77C\uAD04 \uC81C\uC5B4 \uC2A4\uCE94 \uAC04\uACA9 (\uCD08)"
+                    "light_interval": "조명 스캔 간격 (초)",
+                    "concent_interval": "콘센트 스캔 간격 (초)",
+                    "heat_interval": "난방 스캔 간격 (초)",
+                    "aircon_interval": "에어컨 스캔 간격 (초)",
+                    "gas_interval": "가스 스캔 간격 (초)",
+                    "vent_interval": "환기 스캔 간격 (초)",
+                    "energy_interval": "에너지 스캔 간격 (초)",
+                    "totalcontrol_interval": "통합제어 스캔 간격 (초)"
                 }
             }
         }

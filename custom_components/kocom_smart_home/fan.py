@@ -8,8 +8,8 @@ from homeassistant.util.percentage import (
 )
 
 from .const import DOMAIN, LOGGER
-from .coordinator import KocomCoordinator
-from .device import KocomEntity
+from .coordinator import KocomSmartHomeCoordinator
+from .device import KocomSmartHomeEntity
 
 SPEED_LOW = "1"
 SPEED_MID = "2" 
@@ -20,11 +20,11 @@ SPEED_LIST = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
 async def async_setup_entry(hass, config_entry, async_add_entities):
     api = hass.data[DOMAIN][config_entry.entry_id]
 
-    coordinator = KocomCoordinator("vent", api, hass, config_entry)
+    coordinator = KocomSmartHomeCoordinator("vent", api, hass, config_entry)
     devices = await coordinator.get_devices()
 
     entities_to_add: list = [
-        KocomFan(coordinator, device)
+        KocomSmartHomeFan(coordinator, device)
         for device in devices
     ]
     
@@ -32,7 +32,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         async_add_entities(entities_to_add)
 
 
-class KocomFan(KocomEntity, FanEntity): 
+class KocomSmartHomeFan(KocomSmartHomeEntity, FanEntity): 
     def __init__(self, coordinator, device) -> None:
         self._device = device
         self._device_id = device["device_id"]

@@ -1,8 +1,8 @@
 from homeassistant.components.sensor import SensorEntity
 
 from .const import DOMAIN, LOGGER
-from .coordinator import KocomCoordinator
-from .device import KocomEntity
+from .coordinator import KocomSmartHomeCoordinator
+from .device import KocomSmartHomeEntity
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -10,13 +10,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities_to_add: list = []
 
     coordinators = [
-        KocomCoordinator("energy", api, hass, config_entry)
+        KocomSmartHomeCoordinator("energy", api, hass, config_entry)
     ]
 
     for coordinator in coordinators:
         devices = await coordinator.get_devices()
         entities_to_add.extend(
-            KocomSensor(coordinator, device)
+            KocomSmartHomeSensor(coordinator, device)
             for device in devices
         )
     
@@ -24,7 +24,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         async_add_entities(entities_to_add)
 
 
-class KocomSensor(KocomEntity, SensorEntity):
+class KocomSmartHomeSensor(KocomSmartHomeEntity, SensorEntity):
     def __init__(self, coordinator, device) -> None:
         self._device = device
         self._device_id = device["device_id"]

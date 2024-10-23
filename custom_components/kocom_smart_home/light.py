@@ -1,8 +1,8 @@
 from homeassistant.components.light import LightEntity, ColorMode
 
 from .const import DOMAIN, LOGGER
-from .coordinator import KocomCoordinator
-from .device import KocomEntity
+from .coordinator import KocomSmartHomeCoordinator
+from .device import KocomSmartHomeEntity
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -10,14 +10,14 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities_to_add: list = []
 
     coordinators = [
-        KocomCoordinator("light", api, hass, config_entry),
-        KocomCoordinator("totalcontrol", api, hass, config_entry)
+        KocomSmartHomeCoordinator("light", api, hass, config_entry),
+        KocomSmartHomeCoordinator("totalcontrol", api, hass, config_entry)
     ]
 
     for coordinator in coordinators:
         devices = await coordinator.get_devices()
         entities_to_add.extend(
-            KocomLight(coordinator, device)
+            KocomSmartHomeLight(coordinator, device)
             for device in devices
         )
     
@@ -25,7 +25,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         async_add_entities(entities_to_add)
 
 
-class KocomLight(KocomEntity, LightEntity):
+class KocomSmartHomeLight(KocomSmartHomeEntity, LightEntity):
     def __init__(self, coordinator, device) -> None:
         self._device = device
         self._device_id = device["device_id"]

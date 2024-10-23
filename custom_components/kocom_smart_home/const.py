@@ -1,16 +1,17 @@
-"""Constants for Kocom Smart Home."""
+"""Constants for kocom_smart_home."""
 import logging
+
 from homeassistant.const import Platform
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import UnitOfEnergy, UnitOfVolume
 
 LOGGER = logging.getLogger(__name__)
 
-NAME = "Kocom Smart Home"
+NAME = "코콤 스마트홈"
 DOMAIN = "kocom_smart_home"
-VERSION = "1.1.8"
+VERSION = "1.2.0"
 
-TIMEOUT_SEC = 5
+REQUEST_TIMEOUT = 5
 
 PLATFORMS = [
     Platform.FAN,
